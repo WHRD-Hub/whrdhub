@@ -13,11 +13,20 @@ import { createClient as createBrowserSupabase } from "@/lib/supabase/client";
 import { uploadReportScreenshots } from "@/lib/supabase/storage";
 import { CopyButton } from "@/components/copy-button";
 import { toast } from "sonner";
+import { useLanguage, useT } from "@/lib/i18n/context";
+import { translations } from "@/lib/i18n/translations";
 
-// ─── i18n helper ─────────────────────────────────────────────────────────────
-const L = ({ en, sw }: { en: string; sw: string }) => (
-  <span>{en} <span className="text-muted-foreground font-normal text-xs">({sw})</span></span>
-);
+// ─── dual-language label helper ──────────────────────────────────────────────
+// When isDualLang is true (EN or SW), show primary label + secondary in parentheses.
+function DL({ primary, secondary, isDual }: { primary: string; secondary: string; isDual: boolean }) {
+  if (!isDual) return <span>{primary}</span>;
+  return (
+    <span>
+      {primary}{" "}
+      <span className="text-muted-foreground font-normal text-xs">({secondary})</span>
+    </span>
+  );
+}
 
 // ─── pill toggle ─────────────────────────────────────────────────────────────
 function Pill({
@@ -116,25 +125,6 @@ const PLATFORMS = [
   "YouTube", "Telegram", "LinkedIn", "Snapchat", "Email", "SMS", "Other",
 ];
 
-const PERPETRATOR_TYPES = [
-  { value: "government",       label: "Government / Police",     sw: "Serikali / Polisi" },
-  { value: "intimate_partner", label: "Partner / Spouse",        sw: "Mpenzi / Mwenza" },
-  { value: "family_member",    label: "Family member",           sw: "Mwanafamilia" },
-  { value: "employer",         label: "Employer / Colleague",    sw: "Mwajiri" },
-  { value: "online_troll",     label: "Stranger / Online group", sw: "Mtesi / Kikundi" },
-  { value: "unknown",          label: "Unknown",                 sw: "Haijulikani" },
-];
-
-const SUPPORT_OPTIONS = [
-  { value: "legal",            label: "Legal support",        sw: "Kisheria" },
-  { value: "medical",          label: "Medical care",         sw: "Afya" },
-  { value: "psychosocial",     label: "Counselling",          sw: "Ushauri" },
-  { value: "digital_security", label: "Digital security",     sw: "Usalama wa mtandao" },
-  { value: "shelter",          label: "Safe shelter",         sw: "Makazi salama" },
-  { value: "referral",         label: "Referral",             sw: "Uhamisho" },
-  { value: "other",            label: "Other",                sw: "Nyingine" },
-];
-
 const COUNTIES = [
   "Nairobi","Mombasa","Kisumu","Nakuru","Uasin Gishu","Kilifi","Kwale","Kakamega",
   "Bungoma","Machakos","Kajiado","Nyeri","Meru","Embu","Kisii","Migori","Homa Bay",
@@ -154,6 +144,32 @@ interface ReportFormProps {
 export default function ReportForm({ isAuthenticated = false, userEmail }: ReportFormProps) {
   const router = useRouter();
   const screenshotRef = useRef<HTMLInputElement>(null);
+  const { language, isDualLang } = useLanguage();
+  const t = useT();
+
+  // Current language strings
+  const tr = translations[language].report;
+  // Secondary language strings for dual-label mode (always EN↔SW)
+  const sec = isDualLang
+    ? translations[language === "en" ? "sw" : "en"].report
+    : null;
+
+  // Helper: render a field label. In dual-lang mode shows "primary (secondary)".
+  function L(enKey: keyof typeof translations.en.report.fields) {
+    const primary = tr.fields[enKey] as string;
+    const secondary = sec ? (sec.fields[enKey] as string) : "";
+    return <DL primary={primary} secondary={secondary} isDual={isDualLang} />;
+  }
+
+  function optLabel(
+    group: keyof typeof translations.en.report.options,
+    key: string,
+  ): string {
+    const primary = (tr.options[group] as Record<string, string>)[key] ?? key;
+    if (!isDualLang || !sec) return primary;
+    const secondary = (sec.options[group] as Record<string, string>)[key] ?? "";
+    return secondary ? `${primary} / ${secondary}` : primary;
+  }
 
   // Context
   const [reportingFor, setReportingFor] = useState<"self"|"someone_else"|"child"|"community">("self");
@@ -173,8 +189,8 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   const [perpetratorDetail, setPerpDetail] = useState("");
 
   // Online evidence
-  const [platform, setPlatform]           = useState("");
-  const [link, setLink]                   = useState("");
+  const [platform, setPlatform]               = useState("");
+  const [link, setLink]                       = useState("");
   const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
   const [screenshotUrls, setScreenshotUrls]   = useState<string[]>([]);
   const [uploading, setUploading]             = useState(false);
@@ -188,13 +204,13 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   const [contactValue, setContactValue]   = useState("");
 
   // Account
-  const [password, setPassword]       = useState("");
-  const [showPass, setShowPass]       = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
 
   // State
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState<string|null>(null);
-  const [fieldErrors, setFieldErrors]   = useState<Record<string, string>>({});
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState<string|null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const isOnline = violenceType === "online" || violenceType === "both";
 
@@ -207,14 +223,12 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
 
   const validate = (): Record<string, string> => {
     const errs: Record<string, string> = {};
-    if (!violenceType) errs.violenceType = "Please select where the violence happened.";
-    if (description.trim().length < 20) errs.description = `Please describe what happened (${description.trim().length}/20 minimum characters).`;
-    if (!county) errs.county = "Please select a county or region.";
-    if (!isAuthenticated && password.length < 8) errs.password = "Password must be at least 8 characters.";
+    if (!violenceType) errs.violenceType = tr.errors.violenceType;
+    if (description.trim().length < 20) errs.description = tr.errors.descriptionMin(description.trim().length);
+    if (!county) errs.county = tr.errors.county;
+    if (!isAuthenticated && password.length < 8) errs.password = tr.errors.password;
     return errs;
   };
-
-  const canSubmit = () => Object.keys(validate()).length === 0;
 
   const handleSubmit = async () => {
     const errs = validate();
@@ -231,12 +245,11 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       if (screenshotFiles.length > 0 && isAuthenticated) {
         setUploading(true);
         const { urls, errors } = await uploadReportScreenshots("", screenshotFiles);
-        if (errors.length) toast.error(`Some files failed to upload: ${errors[0]}`);
+        if (errors.length) toast.error(`${tr.uploadFailed}: ${errors[0]}`);
         uploadedUrls = urls;
         setUploading(false);
       }
 
-      // Map context pills to incident_types the DB expects
       const incidentTypes: string[] = [];
       if (violenceType === "online" || violenceType === "both") incidentTypes.push("online_harassment");
       if (violenceType === "physical" || violenceType === "both") incidentTypes.push("physical_violence");
@@ -277,8 +290,6 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
           toast.success("Report submitted. Thank you for your courage.");
           router.push("/dashboard");
         } else {
-          // Sign the new anonymous user in so their credentials are visible
-          // on the success page (which requires a session to display them).
           const browserSupabase = createBrowserSupabase();
           await browserSupabase.auth.signInWithPassword({
             email: result.virtualEmail!,
@@ -297,52 +308,45 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
     }
   };
 
+  // Perpetrator options from translations
+  const PERPETRATOR_TYPES = Object.entries(tr.options.perpetrators).map(([value, label]) => ({ value, label }));
+  const SUPPORT_OPTIONS   = Object.entries(tr.options.support).map(([value, label]) => ({ value, label }));
+
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
 
       {/* ── Context ─────────────────────────────────────────────── */}
-      <Card
-        title="About this report"
-        subtitle="Help us understand the situation so we can connect you with the right support."
-      >
-        <Field label={<L en="Who are you reporting for?" sw="Unawasilisha kwa niaba ya nani?" />}>
+      <Card title={tr.sections.aboutReport} subtitle={tr.sections.aboutReportSub}>
+        <Field label={L("reportingFor")}>
           <div className="flex flex-wrap gap-2">
-            {([
-              { value: "self",      label: "Myself",       sw: "Mimi" },
-              { value: "child",     label: "A child",      sw: "Mtoto" },
-              { value: "someone_else", label: "Someone else", sw: "Mtu mwingine" },
-              { value: "community", label: "My community", sw: "Jamii yangu" },
-            ] as const).map(opt => (
+            {(["self", "child", "someone_else", "community"] as const).map(opt => (
               <Pill
-                key={opt.value}
-                selected={reportingFor === opt.value}
-                onClick={() => setReportingFor(opt.value)}
+                key={opt}
+                selected={reportingFor === opt}
+                onClick={() => setReportingFor(opt)}
               >
-                {opt.label}
-                <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
+                {optLabel("reportingFor", opt)}
               </Pill>
             ))}
           </div>
         </Field>
 
         <Field
-          label={<L en="Where did the violence happen?" sw="Unyanyasaji ulitokea wapi?" />}
+          label={L("whereViolence")}
           required
           error={fieldErrors.violenceType}
         >
           <div className="flex flex-wrap gap-2">
-            {([
-              { value: "online",   label: "Online",          sw: "Mtandaoni" },
-              { value: "physical", label: "Physical / In person", sw: "Kimwili" },
-              { value: "both",     label: "Both",            sw: "Vyote viwili" },
-            ] as const).map(opt => (
+            {(["online", "physical", "both"] as const).map(opt => (
               <Pill
-                key={opt.value}
-                selected={violenceType === opt.value}
-                onClick={() => { setViolenceType(opt.value); setFieldErrors(p => ({ ...p, violenceType: "" })); }}
+                key={opt}
+                selected={violenceType === opt}
+                onClick={() => {
+                  setViolenceType(opt);
+                  setFieldErrors(p => ({ ...p, violenceType: "" }));
+                }}
               >
-                {opt.label}
-                <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
+                {optLabel("violenceType", opt)}
               </Pill>
             ))}
           </div>
@@ -350,24 +354,27 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       </Card>
 
       {/* ── What happened ────────────────────────────────────────── */}
-      <Card title="What happened" subtitle="Share as much or as little as you feel comfortable with.">
+      <Card title={tr.sections.whatHappened} subtitle={tr.sections.whatHappenedSub}>
         <Field
-          label={<L en="Tell us what happened" sw="Tuambie kilichotokea" />}
+          label={L("description")}
           required
           error={fieldErrors.description}
-          hint={!fieldErrors.description && description.length < 20 ? `${description.length}/20 minimum characters` : undefined}
+          hint={!fieldErrors.description && description.length < 20 ? `${description.length}/20 min` : undefined}
         >
           <Textarea
             value={description}
-            onChange={e => { setDescription(e.target.value); if (e.target.value.trim().length >= 20) setFieldErrors(p => ({ ...p, description: "" })); }}
+            onChange={e => {
+              setDescription(e.target.value);
+              if (e.target.value.trim().length >= 20) setFieldErrors(p => ({ ...p, description: "" }));
+            }}
             rows={5}
-            placeholder="In your own words, describe what happened. You don't need to use legal or medical terms."
+            placeholder={tr.fields.descriptionPlaceholder}
             className={`rounded-xl resize-none ${fieldErrors.description ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
           />
         </Field>
 
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label={<L en="Approximately when?" sw="Takriban lini?" />}>
+          <Field label={L("when")}>
             <input
               type="date"
               value={occurredDate}
@@ -377,11 +384,11 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             />
           </Field>
 
-          <Field label={<L en="County / Region" sw="Kaunti" />} required error={fieldErrors.county}>
+          <Field label={L("county")} required error={fieldErrors.county}>
             <Select
               value={county}
               onChange={v => { setCounty(v); if (v) setFieldErrors(p => ({ ...p, county: "" })); }}
-              placeholder="Select county"
+              placeholder={tr.fields.countyPlaceholder}
               hasError={!!fieldErrors.county}
             >
               {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -389,12 +396,12 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
           </Field>
         </div>
 
-        <Field label={<L en="Location (optional)" sw="Mahali (hiari)" />}>
+        <Field label={L("location")}>
           <input
             type="text"
             value={locationDesc}
             onChange={e => setLocationDesc(e.target.value)}
-            placeholder="e.g. home, workplace, school, a specific street"
+            placeholder={tr.fields.locationPlaceholder}
             className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </Field>
@@ -407,20 +414,23 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             className="w-4 h-4 rounded accent-primary"
           />
           <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-            <L en="This is still happening" sw="Hili bado linaendelea" />
+            {isDualLang && sec
+              ? <DL primary={tr.fields.isOngoing} secondary={sec.fields.isOngoing} isDual />
+              : tr.fields.isOngoing
+            }
           </span>
         </label>
 
         {latitude && (
           <p className="flex items-center gap-2 text-xs text-green-800 bg-green-50 border border-green-200 px-3 py-2 rounded-lg">
             <MapPin className="w-3.5 h-3.5 shrink-0" />
-            GPS noted for anonymised map visualisation only.
+            {tr.gps}
           </p>
         )}
       </Card>
 
       {/* ── Who did this ─────────────────────────────────────────── */}
-      <Card title="Who did this?" subtitle="This is optional. Only share what feels safe.">
+      <Card title={tr.sections.whoDid} subtitle={tr.sections.whoDid_sub}>
         <div className="flex flex-wrap gap-2">
           {PERPETRATOR_TYPES.map(opt => (
             <Pill
@@ -429,17 +439,16 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               onClick={() => setPerpType(perpetratorType === opt.value ? "" : opt.value)}
             >
               {opt.label}
-              <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
             </Pill>
           ))}
         </div>
         {perpetratorType && (
-          <Field label="Any details? (optional)" hint="Leave blank if you prefer">
+          <Field label={tr.fields.perpetratorDetail} hint={tr.fields.perpetratorDetailHint}>
             <input
               type="text"
               value={perpetratorDetail}
               onChange={e => setPerpDetail(e.target.value)}
-              placeholder="Name, title, organisation, or any identifying detail"
+              placeholder={tr.fields.perpetratorDetailPlaceholder}
               className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </Field>
@@ -448,17 +457,14 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
 
       {/* ── Online evidence ───────────────────────────────────────── */}
       {isOnline && (
-        <Card
-          title="Online evidence"
-          subtitle="These details help defenders understand what happened online."
-        >
-          <Field label={<L en="Platform" sw="Jukwaa" />}>
-            <Select value={platform} onChange={setPlatform} placeholder="Select platform">
+        <Card title={tr.sections.onlineEvidence} subtitle={tr.sections.onlineEvidenceSub}>
+          <Field label={L("platform")}>
+            <Select value={platform} onChange={setPlatform} placeholder={tr.fields.platformPlaceholder}>
               {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
             </Select>
           </Field>
 
-          <Field label={<L en="Link to the content (optional)" sw="Kiungo cha maudhui (hiari)" />}>
+          <Field label={L("link")}>
             <div className="relative">
               <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input
@@ -471,7 +477,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             </div>
           </Field>
 
-          <Field label={<L en="Upload screenshots (optional)" sw="Pakia picha za skrini (hiari)" />}>
+          <Field label={L("screenshots")}>
             <input
               ref={screenshotRef}
               type="file"
@@ -481,7 +487,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               onChange={e => {
                 const files = Array.from(e.target.files || []);
                 if (screenshotFiles.length + files.length > 10) {
-                  toast.error("Maximum 10 files"); return;
+                  toast.error(tr.maxFiles); return;
                 }
                 setScreenshotFiles(prev => [...prev, ...files]);
                 if (screenshotRef.current) screenshotRef.current.value = "";
@@ -494,7 +500,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/20 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <Upload className="w-4 h-4" />
-              Choose files (JPEG, PNG, PDF - max 5 MB each)
+              {tr.fields.screenshotsHint}
             </button>
             {screenshotFiles.length > 0 && (
               <div className="space-y-1.5 mt-2">
@@ -525,8 +531,8 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       )}
 
       {/* ── Support ───────────────────────────────────────────────── */}
-      <Card title="How can we help?" subtitle="Select everything that applies. We will try to connect you with the right services.">
-        <Field label={<L en="Type of support needed" sw="Aina ya msaada" />}>
+      <Card title={tr.sections.support} subtitle={tr.sections.supportSub}>
+        <Field label={L("supportType")}>
           <div className="flex flex-wrap gap-2">
             {SUPPORT_OPTIONS.map(opt => (
               <Pill
@@ -535,7 +541,6 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
                 onClick={() => toggle(supportNeeded, opt.value, setSupportNeeded)}
               >
                 {opt.label}
-                <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
               </Pill>
             ))}
           </div>
@@ -544,35 +549,41 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               value={supportOther}
               onChange={e => setSupportOther(e.target.value)}
               rows={2}
-              placeholder="Describe the support you need..."
+              placeholder="..."
               className="rounded-xl mt-2"
             />
           )}
         </Field>
 
-        <Field label={<L en="How urgent is your situation?" sw="Hali yako ni ya haraka?" />} required>
+        <Field label={L("urgency")} required>
           <div className="space-y-2">
             {([
-              { value: "immediate",   label: "I am in danger right now", sw: "Niko hatarini sasa hivi", danger: true  as boolean },
-              { value: "within_week", label: "This week, help soon",     sw: "Wiki hii, msaada haraka", danger: false as boolean },
-              { value: "no_rush",     label: "No rush, documenting",     sw: "Hakuna haraka, ninaandika", danger: false as boolean },
-            ]).map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setUrgency(opt.value as "immediate"|"within_week"|"no_rush")}
-                className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all
-                  ${urgency === opt.value
-                    ? opt.danger
-                      ? "bg-destructive text-white border-destructive"
-                      : "bg-primary text-primary-foreground border-primary"
-                    : `bg-white border-border hover:border-primary/30 ${opt.danger ? "hover:border-destructive/30" : ""}`
-                  }`}
-              >
-                <span className="font-semibold">{opt.label}</span>
-                <span className="block text-[11px] mt-0.5 opacity-70">{opt.sw}</span>
-              </button>
-            ))}
+              { value: "immediate",   danger: true  },
+              { value: "within_week", danger: false },
+              { value: "no_rush",     danger: false },
+            ] as const).map(opt => {
+              const label = (tr.options.urgency as Record<string, string>)[opt.value] ?? opt.value;
+              const sub   = isDualLang && sec
+                ? (sec.options.urgency as Record<string, string>)[opt.value]
+                : undefined;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setUrgency(opt.value)}
+                  className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all
+                    ${urgency === opt.value
+                      ? opt.danger
+                        ? "bg-destructive text-white border-destructive"
+                        : "bg-primary text-primary-foreground border-primary"
+                      : `bg-white border-border hover:border-primary/30 ${opt.danger ? "hover:border-destructive/30" : ""}`
+                    }`}
+                >
+                  <span className="font-semibold">{label}</span>
+                  {sub && <span className="block text-[11px] mt-0.5 opacity-70">{sub}</span>}
+                </button>
+              );
+            })}
           </div>
         </Field>
 
@@ -584,11 +595,16 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               onChange={e => setConsent(e.target.checked)}
               className="w-4 h-4 mt-0.5 accent-primary"
             />
-            <span className="text-sm"><L en="I am okay with being contacted by a WHRD Hub defender" sw="Nakubali kuwasiliana na mlinzi wa WHRD Hub" /></span>
+            <span className="text-sm">
+              {isDualLang && sec
+                ? <DL primary={tr.fields.consent} secondary={sec.fields.consent} isDual />
+                : tr.fields.consent
+              }
+            </span>
           </label>
           {consent && (
             <div className="grid sm:grid-cols-2 gap-3 pl-7">
-              <Select value={contactMethod} onChange={setContactMethod} placeholder="Preferred method">
+              <Select value={contactMethod} onChange={setContactMethod} placeholder={tr.fields.contactMethod}>
                 <option value="phone">Phone call</option>
                 <option value="whatsapp">WhatsApp</option>
                 <option value="email">Email</option>
@@ -598,7 +614,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
                 type="text"
                 value={contactValue}
                 onChange={e => setContactValue(e.target.value)}
-                placeholder="Phone number or email"
+                placeholder={tr.fields.contactValue}
                 className="rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -607,18 +623,21 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       </Card>
 
       {/* ── Account ───────────────────────────────────────────────── */}
-      <Card title="Your private access">
+      <Card title={tr.sections.yourAccount}>
         {isAuthenticated ? (
           <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200">
             <Shield className="w-5 h-5 text-green-700 shrink-0" />
             <div>
               <p className="font-semibold text-sm text-green-800">
-                <L en="Signed in" sw="Umeingia" />
+                {isDualLang && sec
+                  ? <DL primary={tr.account.signedIn} secondary={sec.account.signedIn} isDual />
+                  : tr.account.signedIn
+                }
               </p>
               {userEmail && (
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs font-mono text-green-700">{userEmail}</span>
-                  <CopyButton text={userEmail} label="Copy" />
+                  <CopyButton text={userEmail} label={t.common.copy} />
                 </div>
               )}
             </div>
@@ -629,16 +648,21 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-semibold text-sm">
-                  <L en="Your username is automatically generated" sw="Jina lako linazalishwa kiotomatiki" />
+                  {isDualLang && sec
+                    ? <DL primary={tr.account.autoUsername} secondary={sec.account.autoUsername} isDual />
+                    : tr.account.autoUsername
+                  }
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  No real name or email is needed. You will see your login details on the next screen.
-                </p>
+                <p className="text-xs text-muted-foreground">{tr.account.autoUsernameSub}</p>
               </div>
             </div>
 
             <Field
-              label={<L en="Create a password (minimum 8 characters)" sw="Weka nenosiri (angalau herufi 8)" />}
+              label={
+                isDualLang && sec
+                  ? <DL primary={tr.fields.password} secondary={sec.fields.password} isDual />
+                  : tr.fields.password
+              }
               required
               error={fieldErrors.password}
             >
@@ -646,8 +670,11 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
                 <input
                   type={showPass ? "text" : "password"}
                   value={password}
-                  onChange={e => { setPassword(e.target.value); if (e.target.value.length >= 8) setFieldErrors(p => ({ ...p, password: "" })); }}
-                  placeholder="Something memorable and unique"
+                  onChange={e => {
+                    setPassword(e.target.value);
+                    if (e.target.value.length >= 8) setFieldErrors(p => ({ ...p, password: "" }));
+                  }}
+                  placeholder={tr.fields.passwordPlaceholder}
                   className={`w-full rounded-xl border bg-background px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2
                     ${fieldErrors.password ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"}`}
                 />
@@ -662,18 +689,18 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             </Field>
 
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900 space-y-0.5">
-              <p className="font-semibold">Write this password down somewhere safe</p>
-              <p className="text-xs">No email is linked to your account, so there is no way to reset it.</p>
+              <p className="font-semibold">{tr.account.writeDownPassword}</p>
+              <p className="text-xs">{tr.account.writeDownPasswordSub}</p>
             </div>
           </>
         )}
 
         <div className="p-4 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground space-y-1.5">
-          <p className="font-semibold text-foreground text-sm">Consent declaration</p>
+          <p className="font-semibold text-foreground text-sm">{tr.sections.consentDeclaration}</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>The information I have provided is truthful to the best of my knowledge.</li>
-            <li>I consent to WHRD Hub storing this report for case management purposes.</li>
-            <li>I understand I can request deletion of my data at any time.</li>
+            {tr.account.consentItems.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
           </ul>
         </div>
       </Card>
@@ -693,9 +720,9 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
         className="w-full h-12 text-sm font-bold rounded-xl"
       >
         {loading || uploading ? (
-          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{uploading ? "Uploading files..." : "Submitting..."}</>
+          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{uploading ? tr.buttons.uploading : tr.buttons.submitting}</>
         ) : (
-          <><Shield className="w-4 h-4 mr-2" />Submit report securely</>
+          <><Shield className="w-4 h-4 mr-2" />{tr.buttons.submit}</>
         )}
       </Button>
 
@@ -705,3 +732,4 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
     </div>
   );
 }
+

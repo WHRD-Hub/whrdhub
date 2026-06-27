@@ -10,6 +10,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Shield } from "lucide-react";
+import { useT } from "@/lib/i18n/context";
+import { LangSwitcher } from "@/components/lang-switcher";
 
 function GoogleIcon() {
   return (
@@ -29,6 +31,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
+  const t = useT();
+  const l = t.auth.login;
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +41,6 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null);
 
     try {
-      // Accept username (anon accounts) or real email
       const isUsername = !identifier.includes("@");
       const email = isUsername
         ? `${identifier.trim()}@whrdhub.local`
@@ -47,10 +50,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       if (error) throw error;
       router.push("/dashboard");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An error occurred";
+      const msg = err instanceof Error ? err.message : t.common.error;
       setError(
         msg.includes("Invalid login credentials")
-          ? "Incorrect username/email or password."
+          ? l.incorrectCredentials
           : msg
       );
     } finally {
@@ -77,17 +80,18 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="text-center mb-2">
-        <p className="font-bold text-xl text-primary">WHRD Hub</p>
-        <p className="text-xs text-muted-foreground">Protect · Heal · Nurture</p>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <p className="font-bold text-xl text-primary">WHRD Hub</p>
+          <p className="text-xs text-muted-foreground">Protect · Heal · Nurture</p>
+        </div>
+        <LangSwitcher variant="compact" />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in with Google, your email address, or your anonymous username.
-          </CardDescription>
+          <CardTitle className="text-2xl">{l.title}</CardTitle>
+          <CardDescription>{l.subtitle}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Google */}
@@ -99,24 +103,24 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             disabled={isGoogleLoading || isLoading}
           >
             <GoogleIcon />
-            {isGoogleLoading ? "Redirecting…" : "Continue with Google"}
+            {isGoogleLoading ? l.redirecting : l.continueWithGoogle}
           </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
+              <span className="bg-card px-2 text-muted-foreground">{t.common.or}</span>
             </div>
           </div>
 
           {/* Email / Username + Password */}
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="identifier">Username or Email</Label>
+              <Label htmlFor="identifier">{l.usernameOrEmail}</Label>
               <Input
                 id="identifier"
                 type="text"
-                placeholder="brave-shield-k4x2  or  you@email.com"
+                placeholder={l.usernamePlaceholder}
                 required
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
@@ -125,9 +129,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             </div>
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{l.password}</Label>
                 <Link href="/auth/forgot-password" className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline">
-                  Forgot password?
+                  {l.forgotPassword}
                 </Link>
               </div>
               <Input
@@ -145,26 +149,25 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-              {isLoading ? "Logging in…" : "Log In"}
+              {isLoading ? l.loggingIn : l.logIn}
             </Button>
           </form>
 
           <div className="p-3 rounded-xl bg-muted/40 flex items-start gap-2 text-xs text-muted-foreground">
             <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />
             <span>
-              Reported anonymously? Use your generated username (e.g.{" "}
-              <span className="font-mono">brave-shield-k4x2</span>) and the password you chose. No email needed.
+              {l.anonHint}
             </span>
           </div>
 
           <p className="text-center text-sm text-muted-foreground">
-            No account?{" "}
+            {l.noAccount}{" "}
             <Link href="/auth/sign-up" className="text-primary font-semibold underline-offset-4 hover:underline">
-              Sign up
+              {l.signUp}
             </Link>
-            {" "}or{" "}
+            {" "}{t.common.or}{" "}
             <Link href="/report" className="text-primary font-semibold underline-offset-4 hover:underline">
-              report anonymously
+              {l.reportAnon}
             </Link>
           </p>
         </CardContent>

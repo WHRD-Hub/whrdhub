@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "sonner";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -35,15 +34,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/icon.png" />
       </head>
       <body className={`${geistSans.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster richColors position="top-center" />
-        </ThemeProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
