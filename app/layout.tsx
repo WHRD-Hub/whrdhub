@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   description:
     "A secure space for Women Human Rights Defenders to report TFGBV and gender-based abuse, and connect with support services.",
   icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="icon" type="image/png" href="/icon.png" />
       </head>
       <body className={`${geistSans.variable} font-sans antialiased`}>
         <ThemeProvider

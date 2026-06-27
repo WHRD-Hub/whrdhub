@@ -46,7 +46,6 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       router.push("/dashboard");
-      router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "An error occurred";
       setError(

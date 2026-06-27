@@ -78,10 +78,16 @@
   h1, h2, h3, h4 { @apply tracking-tight; }
 }
 
-/* ── Clean entrance animations — no blur, no gimmicks ── */
+/* ── Easing tokens (Emil Kowalski: strong ease-out for UI) ── */
+:root {
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* ── Entrance animations ── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes fade-in {
@@ -90,11 +96,11 @@
 }
 
 .animate-fade-up {
-  animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up 0.4s var(--ease-out) both;
 }
 
 .animate-fade-in {
-  animation: fade-in 0.35s ease both;
+  animation: fade-in 0.3s ease-out both;
 }
 
 /* Stagger delays */
@@ -104,12 +110,36 @@
 .delay-300 { animation-delay: 300ms; }
 .delay-375 { animation-delay: 375ms; }
 
-/* Subtle card hover — lift only, no glow */
-.card-lift {
-  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+/* ── Card hover — gate behind hover-capable devices ── */
+@media (hover: hover) and (pointer: fine) {
+  .card-lift {
+    transition: transform 0.2s var(--ease-out),
+                box-shadow 0.2s var(--ease-out);
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px -8px rgba(91, 45, 142, 0.15);
+  }
 }
-.card-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px -6px rgba(91, 45, 142, 0.12);
+
+/* ── Pill / chip hover (only on pointer devices, not touch) ── */
+@media (hover: hover) and (pointer: fine) {
+  button[class*="rounded-full"]:not([class*="bg-primary"]):not([class*="bg-destructive"]):hover {
+    border-color: hsl(var(--primary) / 0.5);
+    background-color: hsl(var(--primary) / 0.04);
+  }
+  button[class*="rounded-xl"]:not([disabled]):hover {
+    box-shadow: 0 1px 4px 0 rgba(0,0,0,0.06);
+  }
+}
+
+/* ── Reduced motion: remove transforms, keep opacity ── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out both;
+  }
+  .card-lift:hover {
+    transform: none;
+  }
 }

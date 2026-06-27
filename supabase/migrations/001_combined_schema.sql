@@ -258,7 +258,8 @@ begin
   on conflict (id) do update set
     email        = coalesce(excluded.email, public.profiles.email),
     display_name = coalesce(excluded.display_name, public.profiles.display_name),
-    avatar_url   = coalesce(excluded.avatar_url, public.profiles.avatar_url);
+    avatar_url   = coalesce(excluded.avatar_url, public.profiles.avatar_url),
+    is_anonymous = excluded.is_anonymous;
 
   return new;
 end;

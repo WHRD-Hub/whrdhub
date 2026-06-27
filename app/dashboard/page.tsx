@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { FileText, Clock, CheckCircle, LogOut, Plus, Briefcase, AlertTriangle, User, ArrowRight } from "lucide-react";
+import { FileText, Clock, CheckCircle, Plus, Briefcase, AlertTriangle, User } from "lucide-react";
+import { LogoutButton } from "@/components/logout-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CredentialsBanner } from "@/components/credentials-banner";
@@ -47,9 +48,14 @@ async function DashboardContent() {
         .in("report_id", reportIds)
     : { data: [] };
 
-  const username  = profile?.username     ?? user.email?.split("@")[0] ?? "reporter";
-  const greeting  = profile?.display_name ?? profile?.username ?? "there";
-  const isAnon    = profile?.is_anonymous ?? true;
+  // If profile row doesn't exist yet (e.g. trigger delay after Google OAuth),
+  // detect anonymity by email domain rather than defaulting to true.
+  const isAnon = profile
+    ? profile.is_anonymous
+    : (user.email?.endsWith("@anon.whrdhub.org") ?? false);
+
+  const username   = profile?.username     ?? user.email?.split("@")[0] ?? "reporter";
+  const greeting   = profile?.display_name ?? profile?.username ?? "there";
   const loginEmail = isAnon ? `${username}@anon.whrdhub.org` : (profile?.email ?? user.email ?? "");
 
   const stats = [
@@ -64,7 +70,7 @@ async function DashboardContent() {
       <header className="bg-white border-b border-border sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icon.svg" alt="" className="w-7 h-7" />
+            <img src="/icon.png" alt="" className="w-7 h-7" />
             <span className="font-black text-sm text-primary">WHRD<span className="text-accent">HUB</span></span>
           </div>
           <div className="flex items-center gap-3">
@@ -73,13 +79,7 @@ async function DashboardContent() {
               <User className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{username}</span>
             </Link>
-            <form action="/auth/signout" method="post">
-              <button type="submit"
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted">
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sign out</span>
-              </button>
-            </form>
+            <LogoutButton />
           </div>
         </div>
       </header>

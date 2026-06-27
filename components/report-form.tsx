@@ -3,291 +3,263 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Eye, EyeOff, ChevronRight, ChevronLeft, Shield, AlertCircle,
-  Link as LinkIcon, Check, MapPin, Upload, X, Loader2, Image as ImageIcon,
+  Eye, EyeOff, Shield, AlertCircle, Link as LinkIcon,
+  Check, MapPin, Upload, X, Loader2, Image as ImageIcon, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { submitReport, type ReportData } from "@/app/actions/submit-report";
 import { uploadReportScreenshots } from "@/lib/supabase/storage";
 import { CopyButton } from "@/components/copy-button";
 import { toast } from "sonner";
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// ─── i18n helper ─────────────────────────────────────────────────────────────
 const L = ({ en, sw }: { en: string; sw: string }) => (
   <span>{en} <span className="text-muted-foreground font-normal text-xs">({sw})</span></span>
 );
 
-const Chip = ({
-  selected, onClick, en, sw,
-}: { selected: boolean; onClick: () => void; en: string; sw: string }) => (
-  <button type="button" onClick={onClick}
-    className={`text-left px-3 py-2.5 rounded-lg border text-sm transition-all
-      ${selected
-        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-        : "bg-white border-border hover:border-primary/40 hover:shadow-sm"}`}>
-    <span className="font-medium leading-tight">{en}</span>
-    <span className="block text-[11px] mt-0.5 opacity-60 leading-tight">{sw}</span>
-  </button>
-);
+// ─── pill toggle ─────────────────────────────────────────────────────────────
+function Pill({
+  selected, onClick, children, danger,
+}: {
+  selected: boolean; onClick: () => void; children: React.ReactNode; danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium select-none
+        transition-[transform,background-color,border-color,color,box-shadow] duration-150 ease-out
+        active:scale-[0.97]
+        ${selected
+          ? danger
+            ? "bg-destructive text-white border-destructive shadow-sm"
+            : "bg-primary text-primary-foreground border-primary shadow-sm"
+          : "bg-white border-border text-foreground"
+        }`}
+      style={{ willChange: "transform" }}
+    >
+      {selected && <Check className="w-3.5 h-3.5 shrink-0" />}
+      {children}
+    </button>
+  );
+}
 
-const Field = ({ label, required, children, hint }: {
-  label: React.ReactNode; required?: boolean; children: React.ReactNode; hint?: string;
-}) => (
-  <div className="space-y-1.5">
-    <label className="block text-sm font-semibold">
-      {label}{required && <span className="text-destructive ml-0.5">*</span>}
-    </label>
-    {children}
-    {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-  </div>
-);
+// ─── card ────────────────────────────────────────────────────────────────────
+function Card({ title, subtitle, children }: {
+  title?: string; subtitle?: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-border shadow-sm p-6 md:p-8 space-y-5">
+      {title && (
+        <div className="space-y-0.5">
+          <h2 className="font-bold text-base text-foreground">{title}</h2>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+// ─── field wrapper ────────────────────────────────────────────────────────────
+function Field({ label, hint, required, children }: {
+  label?: React.ReactNode; hint?: string; required?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      {label && (
+        <label className="block text-sm font-semibold text-foreground">
+          {label}
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </label>
+      )}
+      {children}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+// ─── select ──────────────────────────────────────────────────────────────────
+function Select({ value, onChange, children, placeholder }: {
+  value: string; onChange: (v: string) => void;
+  children: React.ReactNode; placeholder?: string;
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full appearance-none rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring pr-9"
+      >
+        {placeholder && <option value="">{placeholder}</option>}
+        {children}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+    </div>
+  );
+}
 
 function toggle(arr: string[], val: string, set: (v: string[]) => void) {
   set(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
 }
 
 // ─── data ─────────────────────────────────────────────────────────────────────
-const DIGITAL_TYPES = new Set([
-  "online_harassment","doxxing","cyber_stalking",
-  "non_consensual_images","account_hacking","digital_threats","impersonation",
-]);
-
-const INCIDENT_OPTIONS = [
-  { value: "online_harassment",      en: "Online harassment / hate speech",       sw: "Unyanyasaji mtandaoni / lugha ya chuki" },
-  { value: "doxxing",                en: "Doxxing — private info exposed online", sw: "Kutoa taarifa za kibinafsi mtandaoni" },
-  { value: "cyber_stalking",         en: "Cyber stalking / unwanted contact",     sw: "Kufuatwa mtandaoni" },
-  { value: "non_consensual_images",  en: "Non-consensual image/video sharing",    sw: "Picha/video bila ridhaa" },
-  { value: "account_hacking",        en: "Account hacking / surveillance",        sw: "Kudukuliwa akaunti / ufuatiliaji" },
-  { value: "digital_threats",        en: "Digital threats / blackmail",           sw: "Vitisho vya kidijitali / unyakuzi" },
-  { value: "impersonation",          en: "Online impersonation",                  sw: "Kujifanya mtu mwingine mtandaoni" },
-  { value: "physical_violence",      en: "Physical violence / assault",           sw: "Unyanyasaji wa kimwili" },
-  { value: "sexual_violence",        en: "Sexual violence",                       sw: "Unyanyasaji wa kijinsia" },
-  { value: "intimate_partner",       en: "Intimate partner violence",             sw: "Unyanyasaji wa mpenzi" },
-  { value: "workplace_abuse",        en: "Workplace harassment",                  sw: "Unyanyasaji mahali pa kazi" },
-  { value: "hrd_intimidation",       en: "Intimidation targeting HRD work",       sw: "Vitisho dhidi ya kazi ya ulinzi wa haki" },
-  { value: "other",                  en: "Other",                                 sw: "Nyingine" },
-];
-
-const TFGBV_PLATFORMS = [
-  "Facebook","Twitter / X","Instagram","WhatsApp","TikTok","YouTube",
-  "Telegram","LinkedIn","Snapchat","Email","SMS / Text","Other",
+const PLATFORMS = [
+  "Facebook", "Twitter / X", "Instagram", "WhatsApp", "TikTok",
+  "YouTube", "Telegram", "LinkedIn", "Snapchat", "Email", "SMS", "Other",
 ];
 
 const PERPETRATOR_TYPES = [
-  { value: "government",        en: "Government / State",              sw: "Serikali" },
-  { value: "security_forces",   en: "Security forces / Police",        sw: "Vikosi vya usalama / Polisi" },
-  { value: "intimate_partner",  en: "Intimate partner",                sw: "Mpenzi / Mwenza" },
-  { value: "family_member",     en: "Family member",                   sw: "Mwanafamilia" },
-  { value: "community_member",  en: "Community member",                sw: "Mwanajamii" },
-  { value: "employer",          en: "Employer / Colleague",            sw: "Mwajiri / Mwenzake" },
-  { value: "online_troll",      en: "Online troll / anonymous group",  sw: "Mtesi mtandaoni / kikundi kisichojulikana" },
-  { value: "unknown",           en: "Unknown",                         sw: "Haijulikani" },
-  { value: "other",             en: "Other",                           sw: "Nyingine" },
-];
-
-const EVIDENCE_TYPES = [
-  { value: "screenshot",     en: "Screenshot",              sw: "Picha ya skrini" },
-  { value: "recording",      en: "Recording (audio/video)", sw: "Rekodi (sauti/video)" },
-  { value: "link",           en: "Link / URL",              sw: "Kiungo / URL" },
-  { value: "witness",        en: "Witness",                 sw: "Shahidi" },
-  { value: "medical_report", en: "Medical report",          sw: "Ripoti ya daktari" },
-  { value: "chat_logs",      en: "Chat logs / messages",    sw: "Rekodi za mazungumzo" },
+  { value: "government",       label: "Government / Police",     sw: "Serikali / Polisi" },
+  { value: "intimate_partner", label: "Partner / Spouse",        sw: "Mpenzi / Mwenza" },
+  { value: "family_member",    label: "Family member",           sw: "Mwanafamilia" },
+  { value: "employer",         label: "Employer / Colleague",    sw: "Mwajiri" },
+  { value: "online_troll",     label: "Stranger / Online group", sw: "Mtesi / Kikundi" },
+  { value: "unknown",          label: "Unknown",                 sw: "Haijulikani" },
 ];
 
 const SUPPORT_OPTIONS = [
-  { value: "legal",           en: "Legal support",                   sw: "Msaada wa kisheria" },
-  { value: "medical",         en: "Medical care",                    sw: "Huduma ya afya" },
-  { value: "psychosocial",    en: "Counselling / psychosocial",      sw: "Ushauri wa kisaikolojia" },
-  { value: "digital_security",en: "Digital security help",           sw: "Msaada wa usalama wa kidijitali" },
-  { value: "shelter",         en: "Safe shelter",                    sw: "Makazi salama" },
-  { value: "documentation",   en: "Help documenting the case",       sw: "Msaada wa kurekodi kesi" },
-  { value: "referral",        en: "Referral to another organisation", sw: "Uhamisho kwa shirika lingine" },
-];
-
-const ACTIVISM_CONTEXTS = [
-  { value: "environmental",  en: "Environmental advocacy", sw: "Utetezi wa mazingira" },
-  { value: "land_rights",    en: "Land rights",            sw: "Haki za ardhi" },
-  { value: "womens_rights",  en: "Women's rights",         sw: "Haki za wanawake" },
-  { value: "lgbtq",          en: "LGBTQ+ rights",          sw: "Haki za LGBTQ+" },
-  { value: "political",      en: "Political activism",     sw: "Uanaharakati wa kisiasa" },
-  { value: "labour",         en: "Labour rights",          sw: "Haki za wafanyakazi" },
-  { value: "journalism",     en: "Journalism / media",     sw: "Uandishi wa habari" },
-  { value: "demonstration",  en: "Demonstration / protest",sw: "Maandamano" },
-  { value: "community_org",  en: "Community organising",   sw: "Uongozaji wa jamii" },
-  { value: "other",          en: "Other",                  sw: "Nyingine" },
+  { value: "legal",            label: "Legal support",        sw: "Kisheria" },
+  { value: "medical",          label: "Medical care",         sw: "Afya" },
+  { value: "psychosocial",     label: "Counselling",          sw: "Ushauri" },
+  { value: "digital_security", label: "Digital security",     sw: "Usalama wa mtandao" },
+  { value: "shelter",          label: "Safe shelter",         sw: "Makazi salama" },
+  { value: "referral",         label: "Referral",             sw: "Uhamisho" },
+  { value: "other",            label: "Other",                sw: "Nyingine" },
 ];
 
 const COUNTIES = [
-  "Nairobi","Mombasa","Kisumu","Nakuru","Uasin Gishu / Eldoret","Kilifi","Kwale",
-  "Kakamega","Bungoma","Machakos","Kajiado","Nyeri","Meru","Embu","Kisii","Migori",
-  "Homa Bay","Siaya","Trans Nzoia","West Pokot","Turkana","Garissa","Wajir","Mandera",
-  "Marsabit","Isiolo","Laikipia","Nyandarua","Kirinyaga","Murang'a","Kiambu","Narok",
-  "Bomet","Kericho","Baringo","Elgeyo-Marakwet","Nandi","Samburu","Tharaka-Nithi",
-  "Kitui","Makueni","Taita Taveta","Tana River","Lamu","Other / Outside Kenya",
+  "Nairobi","Mombasa","Kisumu","Nakuru","Uasin Gishu","Kilifi","Kwale","Kakamega",
+  "Bungoma","Machakos","Kajiado","Nyeri","Meru","Embu","Kisii","Migori","Homa Bay",
+  "Siaya","Trans Nzoia","Turkana","Garissa","Wajir","Mandera","Marsabit","Isiolo",
+  "Laikipia","Nyandarua","Kirinyaga","Murang'a","Kiambu","Narok","Bomet","Kericho",
+  "Baringo","Nandi","Samburu","Kitui","Makueni","Taita Taveta","Tana River","Lamu",
+  "Other / Outside Kenya",
 ];
 
-type Step = "what" | "who" | "where_when" | "how" | "why" | "support" | "account";
-const STEPS: Step[] = ["what","who","where_when","how","why","support","account"];
-const STEP_LABELS = ["What","Who","Where & When","How","Why","Support","Account"];
-
-// ─── component ────────────────────────────────────────────────────────────────
+// ─── props ────────────────────────────────────────────────────────────────────
 interface ReportFormProps {
   isAuthenticated?: boolean;
   userEmail?: string;
 }
 
+// ─── component ────────────────────────────────────────────────────────────────
 export default function ReportForm({ isAuthenticated = false, userEmail }: ReportFormProps) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("what");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const screenshotRef = useRef<HTMLInputElement>(null);
 
-  // WHAT
-  const [incidentTypes,   setIncidentTypes]   = useState<string[]>([]);
-  const [whatDescription, setWhatDescription] = useState("");
-  const [isTfgbv,         setIsTfgbv]         = useState(false);
-  const [tfgbvPlatform,   setTfgbvPlatform]   = useState("");
-  const [tfgbvLink,       setTfgbvLink]       = useState("");
-  const [tfgbvText,       setTfgbvText]       = useState("");
-  const [deroWords,       setDeroWords]       = useState("");   // comma / newline separated
-  const [attackNature,    setAttackNature]    = useState<"coordinated"|"bot_assisted"|"organic"|"unknown"|"">("");
-  const [reportingFor,    setReportingFor]    = useState<"self"|"someone_else"|"community_leader">("self");
+  // Context
+  const [reportingFor, setReportingFor] = useState<"self"|"someone_else"|"child"|"community">("self");
+  const [violenceType, setViolenceType] = useState<"online"|"physical"|"both"|"">("");
 
-  // WHO
-  const [perpetratorType,   setPerpType]   = useState("");
-  const [perpetratorDetail, setPerpDetail] = useState("");
-
-  // WHERE & WHEN
-  const [county,       setCounty]       = useState("");
+  // What happened
+  const [description, setDescription]   = useState("");
+  const [county, setCounty]             = useState("");
   const [locationDesc, setLocationDesc] = useState("");
   const [occurredDate, setOccurredDate] = useState("");
-  const [occurredTime, setOccurredTime] = useState("");
-  const [isOngoing,    setIsOngoing]    = useState(false);
-  const [latitude,     setLatitude]     = useState<number | null>(null);
-  const [longitude,    setLongitude]    = useState<number | null>(null);
+  const [isOngoing, setIsOngoing]       = useState(false);
+  const [latitude, setLatitude]         = useState<number|null>(null);
+  const [longitude, setLongitude]       = useState<number|null>(null);
 
-  // HOW
-  const [howDescription, setHowDescription] = useState("");
-  const [evidenceTypes,  setEvidenceTypes]  = useState<string[]>([]);
+  // Who
+  const [perpetratorType, setPerpType]     = useState("");
+  const [perpetratorDetail, setPerpDetail] = useState("");
 
-  // Screenshots
-  const [screenshotFiles,  setScreenshotFiles]  = useState<File[]>([]);
-  const [screenshotUrls,   setScreenshotUrls]   = useState<string[]>([]);
-  const [screenshotUploading, setScreenshotUploading] = useState(false);
-  const screenshotInputRef = useRef<HTMLInputElement>(null);
+  // Online evidence
+  const [platform, setPlatform]           = useState("");
+  const [link, setLink]                   = useState("");
+  const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
+  const [screenshotUrls, setScreenshotUrls]   = useState<string[]>([]);
+  const [uploading, setUploading]             = useState(false);
 
-  // WHY
-  const [activismContext,  setActivismContext]  = useState<string[]>([]);
-  const [whyDescription,   setWhyDescription]   = useState("");
+  // Support
+  const [supportNeeded, setSupportNeeded] = useState<string[]>([]);
+  const [supportOther, setSupportOther]   = useState("");
+  const [urgency, setUrgency]             = useState<"immediate"|"within_week"|"no_rush">("within_week");
+  const [consent, setConsent]             = useState(false);
+  const [contactMethod, setContactMethod] = useState("");
+  const [contactValue, setContactValue]   = useState("");
 
-  // SUPPORT
-  const [supportNeeded,      setSupportNeeded]      = useState<string[]>([]);
-  const [urgency,            setUrgency]            = useState<"immediate"|"within_week"|"no_rush">("within_week");
-  const [consentToFollowup,  setConsentToFollowup]  = useState(false);
-  const [contactMethod,      setContactMethod]      = useState("");
-  const [contactValue,       setContactValue]       = useState("");
+  // Account
+  const [password, setPassword]       = useState("");
+  const [showPass, setShowPass]       = useState(false);
 
-  // ACCOUNT
-  const [password,     setPassword]     = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  // State
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState<string|null>(null);
+
+  const isOnline = violenceType === "online" || violenceType === "both";
 
   useEffect(() => {
-    setIsTfgbv(incidentTypes.some(t => DIGITAL_TYPES.has(t)));
-  }, [incidentTypes]);
-
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      pos => { setLatitude(pos.coords.latitude); setLongitude(pos.coords.longitude); },
+    navigator.geolocation?.getCurrentPosition(
+      p => { setLatitude(p.coords.latitude); setLongitude(p.coords.longitude); },
       () => {}
     );
   }, []);
 
-  const stepIndex = STEPS.indexOf(step);
-  const progress  = ((stepIndex + 1) / STEPS.length) * 100;
-
-  const canAdvance = () => {
-    if (step === "what")       return incidentTypes.length > 0 && whatDescription.trim().length >= 10;
-    if (step === "who")        return !!perpetratorType;
-    if (step === "where_when") return !!county && !!occurredDate;
-    if (step === "how")        return howDescription.trim().length >= 5;
-    if (step === "why")        return true;
-    if (step === "support")    return !!urgency;
-    if (step === "account")    return isAuthenticated || password.length >= 8;
+  const canSubmit = () => {
+    if (!violenceType) return false;
+    if (description.trim().length < 20) return false;
+    if (!county) return false;
+    if (!isAuthenticated && password.length < 8) return false;
     return true;
   };
 
-  const next = () => { const i = stepIndex + 1; if (i < STEPS.length) setStep(STEPS[i]); };
-  const back = () => { const i = stepIndex - 1; if (i >= 0) setStep(STEPS[i]); };
-
   const handleSubmit = async () => {
-    setLoading(true); setError(null);
+    if (!canSubmit()) return;
+    setLoading(true);
+    setError(null);
+
     try {
-      // Upload screenshots if any are queued
-      let uploadedScreenshotUrls = [...screenshotUrls];
-      if (screenshotFiles.length > 0 && screenshotUrls.length === 0) {
-        setScreenshotUploading(true);
-        // For anonymous users, screenshots will be uploaded after account creation
-        // via the server action. For authenticated users, upload now.
-        if (isAuthenticated) {
-          const { urls, errors } = await uploadReportScreenshots(
-            "", // userId will be derived from auth session in the storage helper
-            screenshotFiles
-          );
-          if (errors.length > 0) {
-            toast.error(`Some files failed to upload: ${errors[0]}`);
-          }
-          uploadedScreenshotUrls = urls;
-          setScreenshotUrls(urls);
-        }
-        setScreenshotUploading(false);
+      let uploadedUrls = [...screenshotUrls];
+      if (screenshotFiles.length > 0 && isAuthenticated) {
+        setUploading(true);
+        const { urls, errors } = await uploadReportScreenshots("", screenshotFiles);
+        if (errors.length) toast.error(`Some files failed to upload: ${errors[0]}`);
+        uploadedUrls = urls;
+        setUploading(false);
       }
 
-      const deroArray = deroWords
-        .split(/[\n,]+/)
-        .map(w => w.trim())
-        .filter(Boolean);
+      // Map context pills to incident_types the DB expects
+      const incidentTypes: string[] = [];
+      if (violenceType === "online" || violenceType === "both") incidentTypes.push("online_harassment");
+      if (violenceType === "physical" || violenceType === "both") incidentTypes.push("physical_violence");
+
+      const allSupport = [...supportNeeded.filter(s => s !== "other")];
+      if (supportNeeded.includes("other") && supportOther.trim()) allSupport.push("other");
 
       const payload: ReportData = {
-        incident_types:   incidentTypes,
-        description:      whatDescription,
-        what_description: whatDescription,
-        tfgbv_platform:   tfgbvPlatform   || undefined,
-        tfgbv_link:       tfgbvLink       || undefined,
-        tfgbv_content_text: tfgbvText     || undefined,
-        tfgbv_screenshot_urls: uploadedScreenshotUrls.length ? uploadedScreenshotUrls : undefined,
-        derogatory_words: deroArray.length ? deroArray : undefined,
-        attack_nature:    (attackNature as ReportData["attack_nature"]) || undefined,
-        perpetrator_type:   perpetratorType   || undefined,
-        perpetrator_detail: perpetratorDetail || undefined,
-        reporting_for:    reportingFor,
+        incident_types: incidentTypes,
+        description,
+        reporting_for: reportingFor === "child" || reportingFor === "community"
+          ? "someone_else"
+          : (reportingFor as "self"|"someone_else"),
         county,
         location_description: locationDesc || undefined,
         latitude:  latitude  ?? undefined,
         longitude: longitude ?? undefined,
-        occurred_at:   occurredDate || undefined,
-        occurred_time: occurredTime || undefined,
-        is_ongoing:    isOngoing,
-        how_description: howDescription,
-        evidence_types:  evidenceTypes,
-        activism_context: activismContext.join(", ") || undefined,
-        why_description:  whyDescription || undefined,
-        support_needed:   supportNeeded,
+        occurred_at: occurredDate || undefined,
+        is_ongoing: isOngoing,
+        perpetrator_type: perpetratorType || undefined,
+        perpetrator_detail: perpetratorDetail || undefined,
+        tfgbv_platform: isOnline && platform ? platform : undefined,
+        tfgbv_link: isOnline && link ? link : undefined,
+        tfgbv_screenshot_urls: uploadedUrls.length ? uploadedUrls : undefined,
+        support_needed: allSupport,
         urgency,
-        consent_to_followup: consentToFollowup,
-        contact_method: contactMethod || undefined,
-        contact_value:  contactValue  || undefined,
-        password:        isAuthenticated ? undefined : password,
+        consent_to_followup: consent,
+        contact_method: consent && contactMethod ? contactMethod : undefined,
+        contact_value: consent && contactValue ? contactValue : undefined,
+        password: isAuthenticated ? undefined : password,
         is_authenticated: isAuthenticated,
-        reporter_type:   isAuthenticated ? "authenticated" : "anonymous",
+        reporter_type: isAuthenticated ? "authenticated" : "anonymous",
       };
 
       const result = await submitReport(payload);
       if (result.success) {
         if (isAuthenticated) {
-          toast.success("Report submitted successfully.");
+          toast.success("Report submitted. Thank you for your courage.");
           router.push("/dashboard");
         } else {
           const params = new URLSearchParams({ u: result.username!, rid: result.reportId || "" });
@@ -304,462 +276,407 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Progress header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-2">
-          <span className="font-bold text-primary">{STEP_LABELS[stepIndex]} <span className="font-normal text-muted-foreground text-xs">({STEP_LABELS[stepIndex] === "What" ? "Nini" : STEP_LABELS[stepIndex] === "Who" ? "Nani" : STEP_LABELS[stepIndex] === "Where & When" ? "Wapi & Lini" : STEP_LABELS[stepIndex] === "How" ? "Jinsi gani" : STEP_LABELS[stepIndex] === "Why" ? "Kwa nini" : STEP_LABELS[stepIndex] === "Support" ? "Msaada" : "Akaunti"})</span></span>
-          <span className="text-xs text-muted-foreground">{stepIndex + 1} / {STEPS.length}</span>
+    <div className="space-y-5 max-w-2xl mx-auto">
+
+      {/* ── Context ─────────────────────────────────────────────── */}
+      <Card
+        title="About this report"
+        subtitle="Help us understand the situation so we can connect you with the right support."
+      >
+        <Field label={<L en="Who are you reporting for?" sw="Unawasilisha kwa niaba ya nani?" />}>
+          <div className="flex flex-wrap gap-2">
+            {([
+              { value: "self",      label: "Myself",       sw: "Mimi" },
+              { value: "child",     label: "A child",      sw: "Mtoto" },
+              { value: "someone_else", label: "Someone else", sw: "Mtu mwingine" },
+              { value: "community", label: "My community", sw: "Jamii yangu" },
+            ] as const).map(opt => (
+              <Pill
+                key={opt.value}
+                selected={reportingFor === opt.value}
+                onClick={() => setReportingFor(opt.value)}
+              >
+                {opt.label}
+                <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
+              </Pill>
+            ))}
+          </div>
+        </Field>
+
+        <Field
+          label={<L en="Where did the violence happen?" sw="Unyanyasaji ulitokea wapi?" />}
+          required
+        >
+          <div className="flex flex-wrap gap-2">
+            {([
+              { value: "online",   label: "Online",          sw: "Mtandaoni" },
+              { value: "physical", label: "Physical / In person", sw: "Kimwili" },
+              { value: "both",     label: "Both",            sw: "Vyote viwili" },
+            ] as const).map(opt => (
+              <Pill
+                key={opt.value}
+                selected={violenceType === opt.value}
+                onClick={() => setViolenceType(opt.value)}
+              >
+                {opt.label}
+                <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
+              </Pill>
+            ))}
+          </div>
+          {!violenceType && (
+            <p className="text-xs text-muted-foreground mt-1">Please select one to continue</p>
+          )}
+        </Field>
+      </Card>
+
+      {/* ── What happened ────────────────────────────────────────── */}
+      <Card title="What happened" subtitle="Share as much or as little as you feel comfortable with.">
+        <Field
+          label={<L en="Tell us what happened" sw="Tuambie kilichotokea" />}
+          required
+          hint={description.length >= 20 ? undefined : `${description.length}/20 minimum characters`}
+        >
+          <Textarea
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            rows={5}
+            placeholder="In your own words, describe what happened. You don't need to use legal or medical terms."
+            className="rounded-xl resize-none"
+          />
+        </Field>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label={<L en="Approximately when?" sw="Takriban lini?" />}>
+            <input
+              type="date"
+              value={occurredDate}
+              onChange={e => setOccurredDate(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+              className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </Field>
+
+          <Field label={<L en="County / Region" sw="Kaunti" />} required>
+            <Select value={county} onChange={setCounty} placeholder="Select county">
+              {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </Select>
+          </Field>
         </div>
-        <div className="flex gap-1 mb-2">
-          {STEPS.map((s, i) => (
-            <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${i < stepIndex ? "bg-primary" : i === stepIndex ? "bg-secondary" : "bg-border"}`} />
+
+        <Field label={<L en="Location (optional)" sw="Mahali (hiari)" />}>
+          <input
+            type="text"
+            value={locationDesc}
+            onChange={e => setLocationDesc(e.target.value)}
+            placeholder="e.g. home, workplace, school, a specific street"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </Field>
+
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={isOngoing}
+            onChange={e => setIsOngoing(e.target.checked)}
+            className="w-4 h-4 rounded accent-primary"
+          />
+          <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+            <L en="This is still happening" sw="Hili bado linaendelea" />
+          </span>
+        </label>
+
+        {latitude && (
+          <p className="flex items-center gap-2 text-xs text-green-800 bg-green-50 border border-green-200 px-3 py-2 rounded-lg">
+            <MapPin className="w-3.5 h-3.5 shrink-0" />
+            GPS noted for anonymised map visualisation only.
+          </p>
+        )}
+      </Card>
+
+      {/* ── Who did this ─────────────────────────────────────────── */}
+      <Card title="Who did this?" subtitle="This is optional. Only share what feels safe.">
+        <div className="flex flex-wrap gap-2">
+          {PERPETRATOR_TYPES.map(opt => (
+            <Pill
+              key={opt.value}
+              selected={perpetratorType === opt.value}
+              onClick={() => setPerpType(perpetratorType === opt.value ? "" : opt.value)}
+            >
+              {opt.label}
+              <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
+            </Pill>
           ))}
         </div>
-        <Progress value={progress} className="h-1" />
-      </div>
+        {perpetratorType && (
+          <Field label="Any details? (optional)" hint="Leave blank if you prefer">
+            <input
+              type="text"
+              value={perpetratorDetail}
+              onChange={e => setPerpDetail(e.target.value)}
+              placeholder="Name, title, organisation, or any identifying detail"
+              className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </Field>
+        )}
+      </Card>
 
+      {/* ── Online evidence ───────────────────────────────────────── */}
+      {isOnline && (
+        <Card
+          title="Online evidence"
+          subtitle="These details help defenders understand what happened online."
+        >
+          <Field label={<L en="Platform" sw="Jukwaa" />}>
+            <Select value={platform} onChange={setPlatform} placeholder="Select platform">
+              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+            </Select>
+          </Field>
+
+          <Field label={<L en="Link to the content (optional)" sw="Kiungo cha maudhui (hiari)" />}>
+            <div className="relative">
+              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="url"
+                value={link}
+                onChange={e => setLink(e.target.value)}
+                placeholder="https://..."
+                className="w-full rounded-xl border border-input bg-background pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </Field>
+
+          <Field label={<L en="Upload screenshots (optional)" sw="Pakia picha za skrini (hiari)" />}>
+            <input
+              ref={screenshotRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              multiple
+              className="hidden"
+              onChange={e => {
+                const files = Array.from(e.target.files || []);
+                if (screenshotFiles.length + files.length > 10) {
+                  toast.error("Maximum 10 files"); return;
+                }
+                setScreenshotFiles(prev => [...prev, ...files]);
+                if (screenshotRef.current) screenshotRef.current.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => screenshotRef.current?.click()}
+              disabled={uploading || screenshotFiles.length >= 10}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/20 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Choose files (JPEG, PNG, PDF — max 5 MB each)
+            </button>
+            {screenshotFiles.length > 0 && (
+              <div className="space-y-1.5 mt-2">
+                {screenshotFiles.map((f, i) => (
+                  <div key={`${f.name}-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-border text-sm">
+                    <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="flex-1 truncate">{f.name}</span>
+                    <span className="text-xs text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</span>
+                    <button
+                      type="button"
+                      onClick={() => setScreenshotFiles(prev => prev.filter((_, j) => j !== i))}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {screenshotUrls.length > 0 && (
+              <p className="text-xs text-green-700 flex items-center gap-1.5 mt-1">
+                <Check className="w-3.5 h-3.5" />
+                {screenshotUrls.length} file(s) uploaded
+              </p>
+            )}
+          </Field>
+        </Card>
+      )}
+
+      {/* ── Support ───────────────────────────────────────────────── */}
+      <Card title="How can we help?" subtitle="Select everything that applies. We will try to connect you with the right services.">
+        <Field label={<L en="Type of support needed" sw="Aina ya msaada" />}>
+          <div className="flex flex-wrap gap-2">
+            {SUPPORT_OPTIONS.map(opt => (
+              <Pill
+                key={opt.value}
+                selected={supportNeeded.includes(opt.value)}
+                onClick={() => toggle(supportNeeded, opt.value, setSupportNeeded)}
+              >
+                {opt.label}
+                <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
+              </Pill>
+            ))}
+          </div>
+          {supportNeeded.includes("other") && (
+            <Textarea
+              value={supportOther}
+              onChange={e => setSupportOther(e.target.value)}
+              rows={2}
+              placeholder="Describe the support you need..."
+              className="rounded-xl mt-2"
+            />
+          )}
+        </Field>
+
+        <Field label={<L en="How urgent is your situation?" sw="Hali yako ni ya haraka?" />} required>
+          <div className="space-y-2">
+            {([
+              { value: "immediate",   label: "I am in danger right now", sw: "Niko hatarini sasa hivi", danger: true  as boolean },
+              { value: "within_week", label: "This week, help soon",     sw: "Wiki hii, msaada haraka", danger: false as boolean },
+              { value: "no_rush",     label: "No rush, documenting",     sw: "Hakuna haraka, ninaandika", danger: false as boolean },
+            ]).map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setUrgency(opt.value as "immediate"|"within_week"|"no_rush")}
+                className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all
+                  ${urgency === opt.value
+                    ? opt.danger
+                      ? "bg-destructive text-white border-destructive"
+                      : "bg-primary text-primary-foreground border-primary"
+                    : `bg-white border-border hover:border-primary/30 ${opt.danger ? "hover:border-destructive/30" : ""}`
+                  }`}
+              >
+                <span className="font-semibold">{opt.label}</span>
+                <span className="block text-[11px] mt-0.5 opacity-70">{opt.sw}</span>
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={e => setConsent(e.target.checked)}
+              className="w-4 h-4 mt-0.5 accent-primary"
+            />
+            <span className="text-sm"><L en="I am okay with being contacted by a WHRD Hub defender" sw="Nakubali kuwasiliana na mlinzi wa WHRD Hub" /></span>
+          </label>
+          {consent && (
+            <div className="grid sm:grid-cols-2 gap-3 pl-7">
+              <Select value={contactMethod} onChange={setContactMethod} placeholder="Preferred method">
+                <option value="phone">Phone call</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+              </Select>
+              <input
+                type="text"
+                value={contactValue}
+                onChange={e => setContactValue(e.target.value)}
+                placeholder="Phone number or email"
+                className="rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ── Account ───────────────────────────────────────────────── */}
+      <Card title="Your private access">
+        {isAuthenticated ? (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200">
+            <Shield className="w-5 h-5 text-green-700 shrink-0" />
+            <div>
+              <p className="font-semibold text-sm text-green-800">
+                <L en="Signed in" sw="Umeingia" />
+              </p>
+              {userEmail && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-mono text-green-700">{userEmail}</span>
+                  <CopyButton text={userEmail} label="Copy" />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/15">
+              <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">
+                  <L en="Your username is automatically generated" sw="Jina lako linazalishwa kiotomatiki" />
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  No real name or email is needed. You will see your login details on the next screen.
+                </p>
+              </div>
+            </div>
+
+            <Field
+              label={<L en="Create a password (minimum 8 characters)" sw="Weka nenosiri (angalau herufi 8)" />}
+              required
+            >
+              <div className="relative">
+                <input
+                  type={showPass ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Something memorable and unique"
+                  className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {password.length > 0 && password.length < 8 && (
+                <p className="text-xs text-destructive">At least 8 characters required</p>
+              )}
+            </Field>
+
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900 space-y-0.5">
+              <p className="font-semibold">Write this password down somewhere safe</p>
+              <p className="text-xs">No email is linked to your account, so there is no way to reset it.</p>
+            </div>
+          </>
+        )}
+
+        <div className="p-4 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground space-y-1.5">
+          <p className="font-semibold text-foreground text-sm">Consent declaration</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>The information I have provided is truthful to the best of my knowledge.</li>
+            <li>I consent to WHRD Hub storing this report for case management purposes.</li>
+            <li>I understand I can request deletion of my data at any time.</li>
+          </ul>
+        </div>
+      </Card>
+
+      {/* ── Error ─────────────────────────────────────────────────── */}
       {error && (
-        <div className="mb-6 flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* ── STEP 1: WHAT ─────────────────────────────────────────────────────── */}
-      {step === "what" && (
-        <div className="space-y-7">
-          <div>
-            <h2 className="text-xl font-black text-primary mb-1"><L en="What happened?" sw="Nini kilitokea?" /></h2>
-            <p className="text-xs text-muted-foreground">Select all that apply — Chagua yote yanayohusika</p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-2">
-            {INCIDENT_OPTIONS.map(opt => (
-              <Chip key={opt.value} en={opt.en} sw={opt.sw}
-                selected={incidentTypes.includes(opt.value)}
-                onClick={() => toggle(incidentTypes, opt.value, setIncidentTypes)} />
-            ))}
-          </div>
-
-          <Field label={<L en="Describe what happened" sw="Elezea kilichotokea" />} required
-            hint={`${whatDescription.length} chars — min. 10`}>
-            <Textarea value={whatDescription} onChange={e => setWhatDescription(e.target.value)} rows={4}
-              placeholder="In your own words… / Kwa maneno yako mwenyewe…" />
-          </Field>
-
-          {/* TFGBV section — only shown when digital incident types are selected */}
-          {isTfgbv && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-5">
-              <p className="text-sm font-bold text-amber-900">
-                <L en="Online / digital violence details" sw="Maelezo ya unyanyasaji wa kidijitali" />
-              </p>
-
-              {/* Platform */}
-              <Field label={<L en="Platform where it occurred" sw="Jukwaa lililotumika" />}>
-                <select value={tfgbvPlatform} onChange={e => setTfgbvPlatform(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                  <option value="">Select platform / Chagua jukwaa</option>
-                  {TFGBV_PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </Field>
-
-              {/* Link */}
-              <Field label={<span className="flex items-center gap-1"><LinkIcon className="w-3 h-3" /><L en="Link / URL to the content" sw="Kiungo cha maudhui" /></span>}>
-                <input type="url" value={tfgbvLink} onChange={e => setTfgbvLink(e.target.value)}
-                  placeholder="https://…"
-                  className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-              </Field>
-
-              {/* Derogatory words */}
-              <Field label={<L en="Specific derogatory words / slurs used" sw="Maneno ya kudhalilisha yaliyotumiwa" />}
-                hint="Enter words separated by commas or new lines — Andika maneno yakitenganishwa na mkato">
-                <Textarea value={deroWords} onChange={e => setDeroWords(e.target.value)} rows={2}
-                  placeholder="e.g. word1, word2 — or one per line" />
-              </Field>
-
-              {/* Attack nature */}
-              <Field label={<L en="Nature of the attack" sw="Asili ya shambulio" />}>
-                <div className="grid grid-cols-2 gap-2">
-                  {([
-                    { value: "coordinated",  en: "Coordinated attack",  sw: "Shambulio lililopangwa" },
-                    { value: "bot_assisted", en: "Bot-assisted / automated", sw: "Botis / moja kwa moja" },
-                    { value: "organic",      en: "Organic / individual",  sw: "La kawaida / mtu mmoja" },
-                    { value: "unknown",      en: "Unknown",              sw: "Haijulikani" },
-                  ] as const).map(opt => (
-                    <button key={opt.value} type="button"
-                      onClick={() => setAttackNature(attackNature === opt.value ? "" : opt.value)}
-                      className={`text-left px-3 py-2.5 rounded-lg border text-sm transition-all
-                        ${attackNature === opt.value
-                          ? "bg-amber-700 text-white border-amber-700"
-                          : "bg-white border-border hover:border-amber-400"}`}>
-                      <span className="font-medium">{opt.en}</span>
-                      <span className="block text-[11px] mt-0.5 opacity-70">{opt.sw}</span>
-                    </button>
-                  ))}
-                </div>
-              </Field>
-
-              {/* Paste content */}
-              <Field label={<L en="Paste harmful content / text" sw="Bandika maudhui ya kudhuru" />}>
-                <Textarea value={tfgbvText} onChange={e => setTfgbvText(e.target.value)} rows={3}
-                  placeholder="Paste the message, comment, or post here…" />
-              </Field>
-            </div>
-          )}
-
-          <Field label={<L en="Reporting on behalf of" sw="Ninawasilisha kwa niaba ya" />}>
-            <div className="flex flex-wrap gap-2">
-              {(["self","someone_else","community_leader"] as const).map(opt => (
-                <button key={opt} type="button" onClick={() => setReportingFor(opt)}
-                  className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors
-                    ${reportingFor === opt ? "bg-secondary text-secondary-foreground border-secondary" : "border-border hover:border-secondary/50 bg-white"}`}>
-                  {opt === "self" ? "Myself / Mimi" : opt === "someone_else" ? "Someone else / Mtu mwingine" : "My community / Jamii yangu"}
-                </button>
-              ))}
-            </div>
-          </Field>
-        </div>
-      )}
-
-      {/* ── STEP 2: WHO ──────────────────────────────────────────────────────── */}
-      {step === "who" && (
-        <div className="space-y-7">
-          <div>
-            <h2 className="text-xl font-black text-primary mb-1"><L en="Who did this?" sw="Nani alifanya hivi?" /></h2>
-            <p className="text-xs text-muted-foreground">Identifying the perpetrator helps us understand patterns — Kutambua mtendaji husaidia kuelewa mwenendo</p>
-          </div>
-          <Field label={<L en="Perpetrator type" sw="Aina ya mtendaji" />} required>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {PERPETRATOR_TYPES.map(opt => (
-                <Chip key={opt.value} en={opt.en} sw={opt.sw}
-                  selected={perpetratorType === opt.value}
-                  onClick={() => setPerpType(perpetratorType === opt.value ? "" : opt.value)} />
-              ))}
-            </div>
-          </Field>
-          <Field label={<L en="Perpetrator details (optional)" sw="Maelezo ya mtendaji (hiari)" />}
-            hint="Only share what is safe — Shiriki tu kinachokuwa salama">
-            <input type="text" value={perpetratorDetail} onChange={e => setPerpDetail(e.target.value)}
-              placeholder="Name, title, organisation…"
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-          </Field>
-        </div>
-      )}
-
-      {/* ── STEP 3: WHERE & WHEN ─────────────────────────────────────────────── */}
-      {step === "where_when" && (
-        <div className="space-y-7">
-          <div>
-            <h2 className="text-xl font-black text-primary mb-1"><L en="Where and when?" sw="Wapi na lini?" /></h2>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-5">
-            <Field label={<L en="County / Region" sw="Kaunti / Mkoa" />} required>
-              <select value={county} onChange={e => setCounty(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                <option value="">Select county / Chagua kaunti</option>
-                {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </Field>
-            <Field label={<L en="Specific location" sw="Mahali mahususi" />}>
-              <input type="text" value={locationDesc} onChange={e => setLocationDesc(e.target.value)}
-                placeholder="e.g. School hostels, online, workplace…"
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-            </Field>
-            <Field label={<L en="Date" sw="Tarehe" />} required>
-              <input type="date" value={occurredDate} onChange={e => setOccurredDate(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-            </Field>
-            <Field label={<L en="Approximate time" sw="Wakati takriban" />}>
-              <input type="time" value={occurredTime} onChange={e => setOccurredTime(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-            </Field>
-          </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={isOngoing} onChange={e => setIsOngoing(e.target.checked)}
-              className="w-4 h-4 rounded accent-primary" />
-            <span className="text-sm font-medium"><L en="This is still happening (ongoing)" sw="Hili bado linaendelea" /></span>
-          </label>
-          {latitude && (
-            <p className="flex items-center gap-2 text-xs text-green-800 bg-green-50 border border-green-200 px-3 py-2 rounded-lg">
-              <MapPin className="w-3.5 h-3.5 shrink-0" />
-              GPS captured: {latitude.toFixed(4)}, {longitude?.toFixed(4)} — will be used only for anonymised map visualisation
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* ── STEP 4: HOW ──────────────────────────────────────────────────────── */}
-      {step === "how" && (
-        <div className="space-y-7">
-          <div>
-            <h2 className="text-xl font-black text-primary mb-1"><L en="How did it happen?" sw="Ilitokea vipi?" /></h2>
-          </div>
-          <Field label={<L en="Describe how the incident occurred" sw="Elezea jinsi tukio lilivyotokea" />} required
-            hint={`${howDescription.length} chars — min. 5`}>
-            <Textarea value={howDescription} onChange={e => setHowDescription(e.target.value)} rows={5}
-              placeholder="e.g. I was assaulted physically AND they recorded it / Nilipigiwa vibaya NA walinipiga picha…" />
-          </Field>
-          <Field label={<L en="What evidence exists? (optional)" sw="Ushahidi gani unapatikana? (hiari)" />}>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {EVIDENCE_TYPES.map(opt => (
-                <button key={opt.value} type="button"
-                  onClick={() => toggle(evidenceTypes, opt.value, setEvidenceTypes)}
-                  className={`flex items-center gap-2 text-left px-3 py-2.5 rounded-lg border text-sm transition-all
-                    ${evidenceTypes.includes(opt.value)
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-white border-border hover:border-primary/40"}`}>
-                  {evidenceTypes.includes(opt.value)
-                    ? <Check className="w-4 h-4 shrink-0" />
-                    : <span className="w-4 h-4 rounded-sm border-2 border-current opacity-30 shrink-0" />}
-                  <div>
-                    <span className="font-medium">{opt.en}</span>
-                    <span className="block text-[11px] mt-0.5 opacity-60">{opt.sw}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          {/* Screenshot upload — shown when 'screenshot' evidence type is selected */}
-          {evidenceTypes.includes("screenshot") && (
-            <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-              <p className="text-sm font-semibold flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-primary" />
-                <L en="Upload screenshots / evidence" sw="Pakia picha za skrini / ushahidi" />
-              </p>
-              <p className="text-xs text-muted-foreground">
-                JPEG, PNG, WebP, or PDF · max 5 MB each · up to 10 files
-              </p>
-
-              {/* File picker */}
-              <input
-                ref={screenshotInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  const total = screenshotFiles.length + files.length;
-                  if (total > 10) {
-                    toast.error("Maximum 10 files allowed.");
-                    return;
-                  }
-                  setScreenshotFiles(prev => [...prev, ...files]);
-                  if (screenshotInputRef.current) screenshotInputRef.current.value = "";
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={() => screenshotInputRef.current?.click()}
-                disabled={screenshotUploading || screenshotFiles.length >= 10}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-border hover:border-primary/40 bg-white text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                Choose files
-              </button>
-
-              {/* File list */}
-              {screenshotFiles.length > 0 && (
-                <div className="space-y-1.5">
-                  {screenshotFiles.map((file, i) => (
-                    <div key={`${file.name}-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-border text-sm">
-                      <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      <span className="flex-1 truncate">{file.name}</span>
-                      <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
-                      <button
-                        type="button"
-                        onClick={() => setScreenshotFiles(prev => prev.filter((_, j) => j !== i))}
-                        className="text-muted-foreground hover:text-destructive transition-colors"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Upload status */}
-              {screenshotUrls.length > 0 && (
-                <p className="text-xs text-green-700 flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5" />
-                  {screenshotUrls.length} file(s) uploaded successfully
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── STEP 5: WHY ──────────────────────────────────────────────────────── */}
-      {step === "why" && (
-        <div className="space-y-7">
-          <div>
-            <h2 className="text-xl font-black text-primary mb-1"><L en="Why did this happen? (optional)" sw="Kwa nini ilitokea? (hiari)" /></h2>
-            <p className="text-xs text-muted-foreground">Helps us understand attacks on HRDs — Husaidia kuelewa mwenendo wa mashambulizi dhidi ya walinzi wa haki</p>
-          </div>
-          <Field label={<L en="Related to your activism / HRD work?" sw="Inahusiana na uanaharakati wako?" />}>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {ACTIVISM_CONTEXTS.map(opt => (
-                <Chip key={opt.value} en={opt.en} sw={opt.sw}
-                  selected={activismContext.includes(opt.value)}
-                  onClick={() => toggle(activismContext, opt.value, setActivismContext)} />
-              ))}
-            </div>
-          </Field>
-          <Field label={<L en="Additional context" sw="Muktadha zaidi" />}>
-            <Textarea value={whyDescription} onChange={e => setWhyDescription(e.target.value)} rows={3}
-              placeholder="e.g. I was advocating for equal rights at a demonstration… / Nilikuwa nikitetea haki sawa…" />
-          </Field>
-        </div>
-      )}
-
-      {/* ── STEP 6: SUPPORT ──────────────────────────────────────────────────── */}
-      {step === "support" && (
-        <div className="space-y-7">
-          <div>
-            <h2 className="text-xl font-black text-primary mb-1"><L en="What support do you need?" sw="Unahitaji msaada gani?" /></h2>
-          </div>
-          <Field label={<L en="Types of support needed" sw="Aina ya msaada unaohitajika" />}>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {SUPPORT_OPTIONS.map(opt => (
-                <Chip key={opt.value} en={opt.en} sw={opt.sw}
-                  selected={supportNeeded.includes(opt.value)}
-                  onClick={() => toggle(supportNeeded, opt.value, setSupportNeeded)} />
-              ))}
-            </div>
-          </Field>
-
-          <Field label={<L en="How urgent is your situation?" sw="Hali yako ni ya haraka kiasi gani?" />} required>
-            <div className="space-y-2">
-              {[
-                { value: "immediate",   en: "Immediate — I am in danger right now",       sw: "Dharura — niko hatarini sasa hivi",   cls: "border-destructive/40 bg-destructive/5" },
-                { value: "within_week", en: "This week — serious but currently safe",      sw: "Wiki hii — kali lakini salama sasa",  cls: "" },
-                { value: "no_rush",     en: "No rush — documenting for the record",        sw: "Hakuna haraka — ninaandika kwa rekodi", cls: "" },
-              ].map(opt => (
-                <button key={opt.value} type="button" onClick={() => setUrgency(opt.value as typeof urgency)}
-                  className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-all
-                    ${urgency === opt.value
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : `bg-white border-border hover:border-primary/40 ${opt.cls}`}`}>
-                  <span className="font-semibold">{opt.en}</span>
-                  <span className="block text-xs mt-0.5 opacity-70">{opt.sw}</span>
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={consentToFollowup} onChange={e => setConsentToFollowup(e.target.checked)}
-                className="w-4 h-4 mt-0.5 accent-primary" />
-              <span className="text-sm"><L en="I consent to being contacted by a WHRD Hub defender" sw="Nakubali kuwasiliana na mlinzi wa WHRD Hub" /></span>
-            </label>
-            {consentToFollowup && (
-              <div className="grid sm:grid-cols-2 gap-3 pl-7">
-                <select value={contactMethod} onChange={e => setContactMethod(e.target.value)}
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                  <option value="">Preferred method / Njia unayopendelea</option>
-                  <option value="phone">Phone call / Simu</option>
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="email">Email</option>
-                  <option value="sms">SMS</option>
-                </select>
-                <input type="text" value={contactValue} onChange={e => setContactValue(e.target.value)}
-                  placeholder="Phone number or email"
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── STEP 7: ACCOUNT ──────────────────────────────────────────────────── */}
-      {step === "account" && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-black text-primary"><L en="Your private access" sw="Ufikiaji wako wa kibinafsi" /></h2>
-
-          {isAuthenticated ? (
-            <div className="p-4 rounded-xl bg-green-50 border border-green-200 space-y-2">
-              <div className="flex items-center gap-2 text-green-800 font-semibold text-sm">
-                <Shield className="w-4 h-4" />
-                <L en="Logged in — report will link to your account" sw="Umeingia — ripoti itaunganishwa na akaunti yako" />
-              </div>
-              {userEmail && (
-                <div className="flex items-center gap-2 pl-6">
-                  <span className="text-sm font-mono text-green-900 bg-green-100 px-2 py-1 rounded">{userEmail}</span>
-                  <CopyButton text={userEmail} label="Copy" />
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                <div className="flex items-start gap-2">
-                  <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-primary"><L en="Your username is auto-generated" sw="Jina lako la mtumiaji linazalishwa kiotomatiki" /></p>
-                    <p className="text-xs text-muted-foreground">
-                      e.g. <span className="font-mono bg-white px-1 rounded">brave-shield-k4x2</span>{" "}
-                      No real name or email needed. Your login email will be shown on the next screen to copy.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <Field label={<L en="Choose a password (min. 8 characters)" sw="Chagua nenosiri (angalau herufi 8)" />} required>
-                <div className="relative">
-                  <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder="Create a memorable password / Unda nenosiri unalokumbuka"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {password.length > 0 && password.length < 8 && (
-                  <p className="text-xs text-destructive">Minimum 8 characters / Angalau herufi 8</p>
-                )}
-              </Field>
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
-                <p className="font-semibold mb-0.5"><L en="Save your password" sw="Hifadhi nenosiri lako" /></p>
-                <p className="text-xs">Write it down somewhere safe — no email is linked so we cannot send a reset. / Andika mahali salama — hakuna barua pepe iliyounganishwa.</p>
-              </div>
-            </>
-          )}
-
-          <div className="p-4 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground space-y-2">
-            <p className="font-semibold text-foreground text-sm"><L en="Consent declaration" sw="Tamko la idhini" /></p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>The information I have provided is true to the best of my knowledge.</li>
-              <li>I consent to WHRD Hub storing this report for case management purposes.</li>
-              <li>I understand I can request deletion of my data at any time.</li>
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex justify-between items-center mt-10 pt-6 border-t border-border">
-        <Button variant="ghost" onClick={back} disabled={stepIndex === 0}>
-          <ChevronLeft className="w-4 h-4 mr-1" />Back
-        </Button>
-
-        {step !== "account" ? (
-          <Button onClick={next} disabled={!canAdvance()}>
-            Continue <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+      {/* ── Submit ────────────────────────────────────────────────── */}
+      <Button
+        onClick={handleSubmit}
+        disabled={!canSubmit() || loading}
+        className="w-full h-12 text-sm font-bold rounded-xl"
+      >
+        {loading || uploading ? (
+          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{uploading ? "Uploading files..." : "Submitting..."}</>
         ) : (
-          <Button onClick={handleSubmit} disabled={!canAdvance() || loading}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/90 min-w-[160px]">
-            {loading
-              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />Submitting…</>
-              : <><Shield className="w-4 h-4 mr-2" />Submit Report</>}
-          </Button>
+          <><Shield className="w-4 h-4 mr-2" />Submit report securely</>
         )}
-      </div>
+      </Button>
+
+      <p className="text-center text-xs text-muted-foreground pb-4">
+        Protected under the Kenya Data Protection Act (2019). All data is encrypted at rest and in transit.
+      </p>
     </div>
   );
 }
