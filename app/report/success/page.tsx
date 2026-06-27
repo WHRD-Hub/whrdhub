@@ -47,9 +47,9 @@ function SuccessContent() {
 
         {/* Credentials reminder */}
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-sm">
-          <p className="font-semibold text-primary mb-1">Your login credentials are saved on your dashboard</p>
+          <p className="font-semibold text-primary mb-1">You are already signed in</p>
           <p className="text-muted-foreground text-xs">
-            Log in and go to your profile to copy your anonymous email and username any time.
+            Your anonymous email and username are displayed on your dashboard. Save them somewhere safe - they are the only way to access your account.
           </p>
         </div>
 
@@ -61,7 +61,7 @@ function SuccessContent() {
 
         <div className="grid grid-cols-2 gap-3">
           <Button asChild className="w-full">
-            <Link href="/auth/login">Log in to your account <ArrowRight className="w-4 h-4 ml-1" /></Link>
+            <Link href="/dashboard">Go to your dashboard <ArrowRight className="w-4 h-4 ml-1" /></Link>
           </Button>
           <Button variant="outline" asChild className="w-full">
             <Link href="/">Return home</Link>

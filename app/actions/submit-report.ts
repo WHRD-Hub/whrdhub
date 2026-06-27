@@ -78,6 +78,10 @@ export async function submitReport(data: ReportData): Promise<SubmitReportResult
   let userId: string;
   let username: string | undefined;
   let virtualEmail: string | undefined;
+  // For anonymous submissions the regular client has no session (the user was
+  // just created but never signed in), so the admin client is kept in scope
+  // and used for all DB writes in that path.
+  let anonAdmin: ReturnType<typeof createAdminClient> | null = null;
 
   if (data.is_authenticated) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -85,16 +89,16 @@ export async function submitReport(data: ReportData): Promise<SubmitReportResult
     userId = user.id;
   } else {
     username = generateUsername();
-    virtualEmail = `${username}@anon.whrdhub.org`;
+    // Use a placeholder local domain until a real domain is configured.
+    virtualEmail = `${username}@whrdhub.local`;
 
-    // Use admin client so the anonymous virtual account is created pre-confirmed.
-    // This prevents Supabase/Mailtrap from trying to send a confirmation email
-    // to an address that cannot receive mail.
-    const admin = createAdminClient();
-    const { data: signupData, error: signupError } = await admin.auth.admin.createUser({
+    // Use admin client so the anonymous virtual account is created pre-confirmed -
+    // no confirmation email is sent to an address that can't receive mail.
+    anonAdmin = createAdminClient();
+    const { data: signupData, error: signupError } = await anonAdmin.auth.admin.createUser({
       email: virtualEmail,
       password: data.password!,
-      email_confirm: true,          // skip email confirmation entirely
+      email_confirm: true,
       user_metadata: { username, is_anonymous: true, user_type: "reporter" },
     });
 
@@ -103,15 +107,23 @@ export async function submitReport(data: ReportData): Promise<SubmitReportResult
     }
     userId = signupData.user.id;
 
-    // Ensure profile row exists (trigger fires async; upsert as safety net)
-    await supabase.from("profiles").upsert({
+    // Ensure profile row exists. The trigger fires asynchronously so we upsert
+    // via the admin client (service role bypasses RLS; regular client has no
+    // session at this point because the anonymous user was just created).
+    await anonAdmin.from("profiles").upsert({
       id: userId,
       username,
       is_anonymous: true,
       user_type: "reporter",
       email: virtualEmail,
+      onboarding_completed: false,
     }, { onConflict: "id", ignoreDuplicates: false });
   }
+
+  // Use the admin client for anonymous inserts - the regular client has no
+  // session cookie for the newly-created user, so auth.uid() would be null
+  // and RLS would block the INSERT.
+  const insertClient = anonAdmin ?? supabase;
 
   const combinedDescription = [
     data.what_description && `WHAT: ${data.what_description}`,
@@ -119,7 +131,7 @@ export async function submitReport(data: ReportData): Promise<SubmitReportResult
     data.why_description  && `WHY: ${data.why_description}`,
   ].filter(Boolean).join("\n\n");
 
-  const { data: reportRow, error: reportError } = await supabase
+  const { data: reportRow, error: reportError } = await insertClient
     .from("reports")
     .insert([{
       user_id: userId,

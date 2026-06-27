@@ -9,7 +9,7 @@ import { AssignServiceForm } from "@/components/admin/assign-service-form";
 
 const VERIFICATION_META: Record<string, { label: string; icon: React.ReactNode; variant: "info" | "success" | "destructive" | "warning" }> = {
   pending:         { label: "Pending Fact-Check", icon: <HelpCircle className="w-4 h-4" />, variant: "info" },
-  verified:        { label: "Verified — Credible", icon: <CheckCircle className="w-4 h-4" />, variant: "success" },
+  verified:        { label: "Verified - Credible", icon: <CheckCircle className="w-4 h-4" />, variant: "success" },
   unverified:      { label: "Could Not Verify", icon: <XCircle className="w-4 h-4" />, variant: "destructive" },
   needs_more_info: { label: "Needs More Info", icon: <AlertTriangle className="w-4 h-4" />, variant: "warning" },
 };
@@ -29,11 +29,16 @@ async function ReportDetail({ id }: { id: string }) {
 
   const { data: report } = await supabase
     .from("reports")
-    .select("*, profiles!reports_user_id_fkey(username, is_anonymous, email, user_type)")
+    .select("*")
     .eq("id", id)
     .single();
 
   if (!report) notFound();
+
+  // reports.user_id references auth.users, not profiles - fetch profile separately.
+  const { data: profileData } = report.user_id
+    ? await supabase.from("profiles").select("username, is_anonymous, email, user_type").eq("id", report.user_id).single()
+    : { data: null };
 
   const { data: assignedServices } = await supabase
     .from("report_services")
@@ -54,7 +59,7 @@ async function ReportDetail({ id }: { id: string }) {
     .limit(10);
 
   const vm = VERIFICATION_META[report.verification_status] || VERIFICATION_META.pending;
-  const profile = report.profiles as { username?: string; is_anonymous?: boolean; email?: string; user_type?: string } | null;
+  const profile = profileData as { username?: string; is_anonymous?: boolean; email?: string; user_type?: string } | null;
 
   // Log the view
   const { data: { session } } = await supabase.auth.getSession();
@@ -95,7 +100,7 @@ async function ReportDetail({ id }: { id: string }) {
             <h2 className="font-bold text-base flex items-center gap-2"><Shield className="w-4 h-4 text-primary" />Incident Details (5Ws + H)</h2>
 
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">WHAT — Incident Types</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">WHAT - Incident Types</p>
               <div className="flex flex-wrap gap-1.5">
                 {(report.incident_types as string[]).map(t => (
                   <Badge key={t} variant="outline">{t.replace(/_/g, " ")}</Badge>
@@ -103,7 +108,7 @@ async function ReportDetail({ id }: { id: string }) {
               </div>
             </div>
 
-            <Field label="WHAT — Description" value={report.description} />
+            <Field label="WHAT - Description" value={report.description} />
 
             {report.tfgbv_platform && (
               <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
@@ -124,13 +129,13 @@ async function ReportDetail({ id }: { id: string }) {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1"><User className="w-3.5 h-3.5" />WHO — Perpetrator</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1"><User className="w-3.5 h-3.5" />WHO - Perpetrator</p>
                 <p className="text-sm font-medium">{report.perpetrator_type?.replace(/_/g, " ") || "Not specified"}</p>
                 {report.perpetrator_detail && <p className="text-xs text-muted-foreground mt-0.5">{report.perpetrator_detail}</p>}
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />WHERE</p>
-                <p className="text-sm">{report.county || "—"}</p>
+                <p className="text-sm">{report.county || "-"}</p>
                 {report.location_description && <p className="text-xs text-muted-foreground">{report.location_description}</p>}
                 {report.latitude && (
                   <a href={`https://maps.google.com/?q=${report.latitude},${report.longitude}`} target="_blank" rel="noopener noreferrer"
@@ -150,7 +155,7 @@ async function ReportDetail({ id }: { id: string }) {
               </p>
             </div>
 
-            <Field label="HOW — Method / Description" value={report.how_description} />
+            <Field label="HOW - Method / Description" value={report.how_description} />
             {report.evidence_types?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Evidence available</p>
@@ -161,7 +166,7 @@ async function ReportDetail({ id }: { id: string }) {
             )}
 
             {(report.activism_context || report.how_description) && (
-              <Field label="WHY — Activism Context" value={report.activism_context} />
+              <Field label="WHY - Activism Context" value={report.activism_context} />
             )}
           </div>
 
@@ -174,13 +179,20 @@ async function ReportDetail({ id }: { id: string }) {
             {report.consent_to_followup && (
               <div className="text-sm bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="font-semibold text-green-800 mb-1">Consented to follow-up</p>
-                <p className="text-green-700">Via {report.contact_method || "—"}: {report.contact_value || "—"}</p>
+                <p className="text-green-700">Via {report.contact_method || "-"}: {report.contact_value || "-"}</p>
               </div>
             )}
           </div>
 
           {/* Fact-check form */}
-          <FactCheckForm reportId={id} currentStatus={report.verification_status} currentNotes={report.verification_notes} />
+          <FactCheckForm
+            reportId={id}
+            currentStatus={report.verification_status}
+            currentNotes={report.verification_notes}
+            currentIncidentTypes={report.incident_types as string[]}
+            currentAttackNature={report.attack_nature}
+            currentDerogatoryWords={report.derogatory_words as string[] | undefined}
+          />
         </div>
 
         {/* Sidebar */}
@@ -250,7 +262,7 @@ async function ReportDetail({ id }: { id: string }) {
                   return (
                     <div key={i} className="text-xs flex justify-between gap-2 py-1 border-b border-border last:border-0">
                       <span className="text-muted-foreground">
-                        <span className="font-medium text-foreground">{p?.username || "defender"}</span> — {log.action}
+                        <span className="font-medium text-foreground">{p?.username || "defender"}</span> - {log.action}
                       </span>
                       <span className="text-muted-foreground shrink-0">{new Date(log.created_at).toLocaleDateString()}</span>
                     </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 // Africa's Talking USSD webhook handler
-// Shared USSD code — set up via Africa's Talking dashboard
+// Shared USSD code - set up via Africa's Talking dashboard
 // AT sends: sessionId, serviceCode, phoneNumber, text (cumulative user input)
 
 const MENU = {

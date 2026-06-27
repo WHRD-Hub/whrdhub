@@ -16,6 +16,8 @@ interface ChartData {
   verificationBreakdown: { name: string; count: number }[];
   reporterTypeBreakdown: { name: string; value: number }[];
   monthlyTrend: { month: string; anonymous: number; authenticated: number }[];
+  attackNatureBreakdown?: { name: string; count: number }[];
+  derogatoryWordBreakdown?: { name: string; count: number }[];
 }
 
 export function ReportsCharts({ data }: { data: ChartData }) {
@@ -109,6 +111,40 @@ export function ReportsCharts({ data }: { data: ChartData }) {
           </PieChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Attack nature */}
+      {data.attackNatureBreakdown && data.attackNatureBreakdown.length > 0 && (
+        <div className="bg-white rounded-xl border border-border p-5">
+          <h3 className="font-bold text-sm mb-4">Attack Nature Classification</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie data={data.attackNatureBreakdown} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={70}
+                label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ""} ${((percent ?? 0)*100).toFixed(0)}%`}>
+                {data.attackNatureBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Top derogatory words */}
+      {data.derogatoryWordBreakdown && data.derogatoryWordBreakdown.length > 0 && (
+        <div className="bg-white rounded-xl border border-border p-5 lg:col-span-2">
+          <h3 className="font-bold text-sm mb-1">Top Derogatory Words / Hate Speech Terms</h3>
+          <p className="text-xs text-muted-foreground mb-4">Frequency of hate speech terms logged by admins during fact-checking</p>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={data.derogatoryWordBreakdown.slice(0, 15)} layout="vertical" margin={{ left: 80 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
+              <Tooltip />
+              <Bar dataKey="count" fill="#f43f5e" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }

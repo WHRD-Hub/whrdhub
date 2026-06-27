@@ -7,13 +7,13 @@ import { Suspense } from "react";
 
 async function UserDetails() {
   const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (error || !user) {
+  if (!session) {
     redirect("/auth/login");
   }
 
-  return JSON.stringify(user, null, 2);
+  return JSON.stringify(session.user, null, 2);
 }
 
 export default function ProtectedPage() {

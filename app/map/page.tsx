@@ -17,7 +17,7 @@ export default function MapPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-primary text-primary-foreground px-6 py-4">
-        <h1 className="font-black text-lg">WHRD Hub — Incident Map</h1>
+        <h1 className="font-black text-lg">WHRD Hub - Incident Map</h1>
         <p className="text-xs opacity-70">Reports with GPS coordinates. Data is anonymized.</p>
       </header>
       <div className="flex-1">

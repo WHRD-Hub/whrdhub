@@ -34,7 +34,7 @@ export function CredentialsBanner({ username, loginEmail }: { username: string; 
       </div>
       <div className="p-5 space-y-4">
         <p className="text-sm text-muted-foreground">
-          Your account was created anonymously. Keep these safe — there is no way to recover them if lost.
+          Your account was created anonymously. Keep these safe - there is no way to recover them if lost.
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="space-y-1">

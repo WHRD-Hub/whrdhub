@@ -40,7 +40,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       // Accept username (anon accounts) or real email
       const isUsername = !identifier.includes("@");
       const email = isUsername
-        ? `${identifier.trim()}@anon.whrdhub.org`
+        ? `${identifier.trim()}@whrdhub.local`
         : identifier.trim();
 
       const { error } = await supabase.auth.signInWithPassword({ email, password });

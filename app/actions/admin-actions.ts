@@ -3,6 +3,46 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export async function factCheckReport(
+  reportId: string,
+  data: {
+    verification_status: string;
+    verification_notes: string;
+    incident_types: string[];
+    attack_nature: string;
+    derogatory_words: string[];
+  },
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase.from("reports").update({
+    verification_status: data.verification_status,
+    verification_notes: data.verification_notes,
+    verified_by: user.id,
+    verified_at: new Date().toISOString(),
+    incident_types: data.incident_types,
+    attack_nature: data.attack_nature as "coordinated" | "bot_assisted" | "organic" | "unknown",
+    derogatory_words: data.derogatory_words,
+    status: data.verification_status === "verified" ? "under_review" : "submitted",
+  }).eq("id", reportId);
+
+  if (error) return { error: error.message };
+
+  await supabase.from("report_audit_log").insert({
+    report_id: reportId,
+    viewed_by: user.id,
+    action: `fact_check:${data.verification_status}`,
+    notes: data.verification_notes,
+  });
+
+  revalidatePath(`/admin/reports/${reportId}`);
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
 export async function verifyReport(reportId: string, status: string, notes: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

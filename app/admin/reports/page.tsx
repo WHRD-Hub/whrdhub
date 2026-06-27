@@ -18,8 +18,9 @@ const STATUS_BADGE: Record<string, "secondary" | "info" | "success" | "warning" 
   submitted: "secondary", under_review: "info", referred: "success", closed: "secondary", flagged: "destructive",
 };
 
-async function ReportsTable({ page, county, urgency, verif, reporter }: {
+async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, currentUserId }: {
   page: number; county?: string; urgency?: string; verif?: string; reporter?: string;
+  selfOnly?: boolean; currentUserId?: string;
 }) {
   const supabase = await createClient();
   const from = (page - 1) * PAGE_SIZE;
@@ -34,6 +35,7 @@ async function ReportsTable({ page, county, urgency, verif, reporter }: {
   if (urgency) query = query.eq("urgency", urgency);
   if (verif) query = query.eq("verification_status", verif);
   if (reporter) query = query.eq("reporter_type", reporter);
+  if (selfOnly && currentUserId) query = query.eq("user_id", currentUserId);
 
   const { data: reports, count } = await query;
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
@@ -45,6 +47,7 @@ async function ReportsTable({ page, county, urgency, verif, reporter }: {
     if (urgency) params.set("urgency", urgency);
     if (verif) params.set("verif", verif);
     if (reporter) params.set("reporter", reporter);
+    if (selfOnly) params.set("self", "1");
     return `/admin/reports?${params}`;
   };
 
@@ -83,8 +86,8 @@ async function ReportsTable({ page, county, urgency, verif, reporter }: {
                     {(r.incident_types as string[]).length > 2 && <span className="text-xs text-muted-foreground">+{(r.incident_types as string[]).length - 2}</span>}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm">{r.county || "—"}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{r.perpetrator_type?.replace(/_/g, " ") || "—"}</TableCell>
+                <TableCell className="text-sm">{r.county || "-"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{r.perpetrator_type?.replace(/_/g, " ") || "-"}</TableCell>
                 <TableCell>
                   <Badge variant={URGENCY_BADGE[r.urgency] || "secondary"}>
                     {r.urgency?.replace(/_/g, " ")}
@@ -150,8 +153,12 @@ async function AdminReportsContent({ searchParams }: { searchParams: Promise<Rec
   const urgency = sp.urgency;
   const verif = sp.verif;
   const reporter = sp.reporter;
+  const selfOnly = sp.self === "1";
 
   const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const currentUserId = session?.user?.id;
+
   const { data: counties } = await supabase.from("reports").select("county").not("county", "is", null);
   const uniqueCounties = [...new Set((counties ?? []).map(r => r.county).filter(Boolean))].sort();
 
@@ -198,6 +205,13 @@ async function AdminReportsContent({ searchParams }: { searchParams: Promise<Rec
             <option value="authenticated">Authenticated</option>
           </select>
         </div>
+        <div>
+          <label className="block text-xs font-semibold mb-1 text-muted-foreground">View</label>
+          <select name="self" defaultValue={selfOnly ? "1" : ""} className="rounded-lg border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+            <option value="">All reports</option>
+            <option value="1">My self-reports</option>
+          </select>
+        </div>
         <input type="hidden" name="page" value="1" />
         <Button type="submit" size="sm">Apply Filters</Button>
         <Button type="button" variant="ghost" size="sm" asChild>
@@ -205,8 +219,18 @@ async function AdminReportsContent({ searchParams }: { searchParams: Promise<Rec
         </Button>
       </form>
 
+      {selfOnly && (
+        <div className="flex items-center gap-2 text-sm bg-primary/5 border border-primary/20 text-primary px-4 py-2.5 rounded-xl">
+          <span className="font-semibold">Showing your self-reports only.</span>
+          <Link href="/admin/reports" className="underline text-xs">Show all</Link>
+        </div>
+      )}
+
       <Suspense fallback={<div className="bg-white rounded-xl border border-border p-12 text-center text-muted-foreground animate-pulse">Loading reports...</div>}>
-        <ReportsTable page={page} county={county} urgency={urgency} verif={verif} reporter={reporter} />
+        <ReportsTable
+          page={page} county={county} urgency={urgency} verif={verif} reporter={reporter}
+          selfOnly={selfOnly} currentUserId={currentUserId}
+        />
       </Suspense>
     </div>
   );

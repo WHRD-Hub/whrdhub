@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { FileText, Clock, CheckCircle, Plus, Briefcase, AlertTriangle, User } from "lucide-react";
+import { FileText, Clock, CheckCircle, Plus, Briefcase, AlertTriangle, User, Shield } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,21 +25,26 @@ const VERIF_META: Record<string, { label: string; variant: "secondary" | "info" 
 
 async function DashboardContent() {
   const supabase = await createClient();
-  // getSession() reads the JWT from cookies locally — no network call,
-  // no token refresh, no setAll side-effect. getUser() hits the Supabase
-  // API on every render which can refresh the token and change auth cookies;
-  // Next.js App Router then re-renders because it detects a tracked cookie
-  // changed mid-stream, causing an infinite loop.
-  // Auth is already validated by the proxy before this page is reached.
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
   if (!user) redirect("/auth/login");
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, display_name, is_anonymous, user_type, email")
+    .select("username, display_name, is_anonymous, user_type, email, onboarding_completed")
     .eq("id", user.id)
     .single();
+
+  // Admin/defender users see the admin console, not the reporter dashboard
+  if (profile && ["admin", "defender"].includes(profile.user_type)) {
+    redirect("/admin");
+  }
+
+  // ALL users must accept T&C before accessing their dashboard.
+  // Anonymous users skip role selection but still go through onboarding.
+  if (profile && !profile.onboarding_completed) {
+    redirect("/onboarding");
+  }
 
   const { data: reports } = await supabase
     .from("reports")
@@ -59,11 +64,11 @@ async function DashboardContent() {
   // detect anonymity by email domain rather than defaulting to true.
   const isAnon = profile
     ? profile.is_anonymous
-    : (user.email?.endsWith("@anon.whrdhub.org") ?? false);
+    : (user.email?.endsWith("@whrdhub.local") ?? false);
 
   const username   = profile?.username     ?? user.email?.split("@")[0] ?? "reporter";
   const greeting   = profile?.display_name ?? profile?.username ?? "there";
-  const loginEmail = isAnon ? `${username}@anon.whrdhub.org` : (profile?.email ?? user.email ?? "");
+  const loginEmail = isAnon ? `${username}@whrdhub.local` : (profile?.email ?? user.email ?? "");
 
   const stats = [
     { label: "Reports submitted", value: reports?.length ?? 0,                                                              icon: FileText,      color: "text-primary bg-primary/10" },
@@ -81,6 +86,11 @@ async function DashboardContent() {
             <span className="font-black text-sm text-primary">WHRD<span className="text-accent">HUB</span></span>
           </div>
           <div className="flex items-center gap-3">
+            {profile?.user_type === "admin" && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20">
+                <Shield className="w-3 h-3" /> Admin
+              </span>
+            )}
             <Link href="/profile"
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted">
               <User className="w-3.5 h-3.5" />
@@ -104,7 +114,7 @@ async function DashboardContent() {
           </Button>
         </div>
 
-        {/* Anonymous credentials banner — dismissible */}
+        {/* Anonymous credentials banner - dismissible */}
         {isAnon && (
           <CredentialsBanner username={username} loginEmail={loginEmail} />
         )}

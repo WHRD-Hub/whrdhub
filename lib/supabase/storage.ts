@@ -14,7 +14,7 @@ export async function uploadAvatar(
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${userId}/avatar.${ext}`;
 
-  // Upsert — overwrite any existing avatar
+  // Upsert - overwrite any existing avatar
   const { error } = await supabase.storage
     .from("avatars")
     .upload(path, file, { upsert: true, contentType: file.type });
@@ -90,7 +90,7 @@ export async function uploadReportScreenshots(
       continue;
     }
 
-    // Store the permanent storage path — signed URLs can be generated on demand
+    // Store the permanent storage path - signed URLs can be generated on demand
     urls.push(path);
   }
 

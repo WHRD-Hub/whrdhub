@@ -1,5 +1,5 @@
 -- ============================================================
--- WHRD Hub — Combined Schema (single migration)
+-- WHRD Hub - Combined Schema (single migration)
 -- Run once in Supabase SQL Editor
 -- ============================================================
 
@@ -74,7 +74,7 @@ create table if not exists public.reports (
   how_description      text,
   evidence_types       text[],
 
-  -- TFGBV — online attack detail
+  -- TFGBV - online attack detail
   derogatory_words     text[],
   attack_nature        public.attack_nature_enum,
 
@@ -475,7 +475,7 @@ create policy "screenshots_defenders_read" on storage.objects
 -- ║  11. RPC FUNCTIONS                                          ║
 -- ╚══════════════════════════════════════════════════════════════╝
 
--- ── get_report_stats() — admin dashboard summary ───────────────
+-- ── get_report_stats() - admin dashboard summary ───────────────
 create or replace function public.get_report_stats()
 returns json language plpgsql security definer as $$
 declare

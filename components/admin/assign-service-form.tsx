@@ -37,7 +37,7 @@ export function AssignServiceForm({ reportId, services }: { reportId: string; se
         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
         <option value="">Select service...</option>
         {services.map(s => (
-          <option key={s.id} value={s.id}>{s.name} ({s.category}){s.organization ? ` — ${s.organization}` : ""}</option>
+          <option key={s.id} value={s.id}>{s.name} ({s.category}){s.organization ? ` - ${s.organization}` : ""}</option>
         ))}
       </select>
       <input type="text" value={note} onChange={e => setNote(e.target.value)}

@@ -21,7 +21,7 @@ async function ProfileContent() {
   const isAnon      = profile?.is_anonymous ?? true;
   const userType    = profile?.user_type    ?? "reporter";
   const avatarUrl   = profile?.avatar_url   ?? null;
-  const virtualEmail = isAnon ? `${username}@anon.whrdhub.org` : email;
+  const virtualEmail = isAnon ? `${username}@whrdhub.local` : email;
 
   return (
     <ProfileClient

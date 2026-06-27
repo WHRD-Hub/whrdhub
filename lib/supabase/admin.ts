@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Admin client — uses the service role key, server-side only.
+// Admin client - uses the service role key, server-side only.
 // Never import this in client components or expose to the browser.
 export function createAdminClient() {
   return createClient(

@@ -25,7 +25,7 @@ export async function createClient() {
           // Writing cookies from a Server Component in Next.js 15+ succeeds
           // (unlike v14 where it threw), which causes Next.js App Router to
           // detect a "tracked cookie changed during render" and issue an RSC
-          // re-render — infinite loop. Keeping this as a no-op prevents that.
+          // re-render - infinite loop. Keeping this as a no-op prevents that.
         },
       },
     },

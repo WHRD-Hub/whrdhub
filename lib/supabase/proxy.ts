@@ -39,23 +39,31 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Do not run code between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // supabase.auth.getSession(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
   //
-  // getUser() is the ONLY secure auth check — it validates the JWT with the
-  // Supabase server. It runs once here in the proxy so RSC pages don't need to
-  // call it again. When the token is refreshed, setAll updates request.cookies
-  // so the RSC sees the fresh token. The server.ts setAll is a no-op so no
-  // cookie writes happen during RSC render, preventing the re-render loop.
+  // WHY getSession() and not getUser():
+  //   getUser() validates the JWT with the Supabase server on every request.
+  //   That network call can return a refreshed token which triggers setAll,
+  //   writing a new Set-Cookie header. Next.js App Router detects that the
+  //   response cookie differs from the request cookie and issues an RSC
+  //   re-render - infinite loop on every protected page.
+  //
+  //   getSession() decodes the JWT from the request cookies locally - no
+  //   network call, no setAll, no cookie change, no re-render loop.
+  //
+  //   Actual data security is enforced by Supabase RLS policies which use
+  //   auth.uid() validated by Supabase's own servers, not by this proxy.
+  //   The proxy only provides a UI-level access gate.
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
 
   const publicPaths = ["/", "/report", "/auth", "/map"];
   const isPublic = publicPaths.some(
     (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(p + "/")
   );
 
-  if (!user && !isPublic) {
+  if (!session && !isPublic) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";

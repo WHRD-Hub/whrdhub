@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* WHRD Hub — exact brand palette from whrdhub.org */
+    /* WHRD Hub - exact brand palette from whrdhub.org */
     --background: 270 30% 97%;          /* Very light lavender #f5f3fa */
     --foreground: 270 45% 12%;          /* Deep purple-black   #1a0d2e */
 
@@ -23,7 +23,7 @@
     --accent: 322 80% 50%;              /* Brand magenta #E0198C */
     --accent-foreground: 0 0% 100%;
 
-    /* Orange — used only as a highlight/accent touch */
+    /* Orange - used only as a highlight/accent touch */
     --highlight: 27 87% 52%;            /* Warm orange   #E8720A */
 
     --muted: 270 20% 93%;
@@ -110,7 +110,7 @@
 .delay-300 { animation-delay: 300ms; }
 .delay-375 { animation-delay: 375ms; }
 
-/* ── Card hover — gate behind hover-capable devices ── */
+/* ── Card hover - gate behind hover-capable devices ── */
 @media (hover: hover) and (pointer: fine) {
   .card-lift {
     transition: transform 0.2s var(--ease-out),

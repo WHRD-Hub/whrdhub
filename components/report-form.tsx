@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { submitReport, type ReportData } from "@/app/actions/submit-report";
+import { createClient as createBrowserSupabase } from "@/lib/supabase/client";
 import { uploadReportScreenshots } from "@/lib/supabase/storage";
 import { CopyButton } from "@/components/copy-button";
 import { toast } from "sonner";
@@ -63,8 +64,9 @@ function Card({ title, subtitle, children }: {
 }
 
 // ─── field wrapper ────────────────────────────────────────────────────────────
-function Field({ label, hint, required, children }: {
-  label?: React.ReactNode; hint?: string; required?: boolean; children: React.ReactNode;
+function Field({ label, hint, required, error, children }: {
+  label?: React.ReactNode; hint?: string; required?: boolean;
+  error?: string; children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
@@ -75,22 +77,26 @@ function Field({ label, hint, required, children }: {
         </label>
       )}
       {children}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {error
+        ? <p className="text-xs text-destructive font-medium">{error}</p>
+        : hint && <p className="text-xs text-muted-foreground">{hint}</p>
+      }
     </div>
   );
 }
 
 // ─── select ──────────────────────────────────────────────────────────────────
-function Select({ value, onChange, children, placeholder }: {
+function Select({ value, onChange, children, placeholder, hasError }: {
   value: string; onChange: (v: string) => void;
-  children: React.ReactNode; placeholder?: string;
+  children: React.ReactNode; placeholder?: string; hasError?: boolean;
 }) {
   return (
     <div className="relative">
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full appearance-none rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring pr-9"
+        className={`w-full appearance-none rounded-xl border bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 pr-9
+          ${hasError ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"}`}
       >
         {placeholder && <option value="">{placeholder}</option>}
         {children}
@@ -186,8 +192,9 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   const [showPass, setShowPass]       = useState(false);
 
   // State
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string|null>(null);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState<string|null>(null);
+  const [fieldErrors, setFieldErrors]   = useState<Record<string, string>>({});
 
   const isOnline = violenceType === "online" || violenceType === "both";
 
@@ -198,16 +205,24 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
     );
   }, []);
 
-  const canSubmit = () => {
-    if (!violenceType) return false;
-    if (description.trim().length < 20) return false;
-    if (!county) return false;
-    if (!isAuthenticated && password.length < 8) return false;
-    return true;
+  const validate = (): Record<string, string> => {
+    const errs: Record<string, string> = {};
+    if (!violenceType) errs.violenceType = "Please select where the violence happened.";
+    if (description.trim().length < 20) errs.description = `Please describe what happened (${description.trim().length}/20 minimum characters).`;
+    if (!county) errs.county = "Please select a county or region.";
+    if (!isAuthenticated && password.length < 8) errs.password = "Password must be at least 8 characters.";
+    return errs;
   };
 
+  const canSubmit = () => Object.keys(validate()).length === 0;
+
   const handleSubmit = async () => {
-    if (!canSubmit()) return;
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
     setLoading(true);
     setError(null);
 
@@ -262,6 +277,13 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
           toast.success("Report submitted. Thank you for your courage.");
           router.push("/dashboard");
         } else {
+          // Sign the new anonymous user in so their credentials are visible
+          // on the success page (which requires a session to display them).
+          const browserSupabase = createBrowserSupabase();
+          await browserSupabase.auth.signInWithPassword({
+            email: result.virtualEmail!,
+            password,
+          });
           const params = new URLSearchParams({ u: result.username!, rid: result.reportId || "" });
           router.push(`/report/success?${params}`);
         }
@@ -306,6 +328,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
         <Field
           label={<L en="Where did the violence happen?" sw="Unyanyasaji ulitokea wapi?" />}
           required
+          error={fieldErrors.violenceType}
         >
           <div className="flex flex-wrap gap-2">
             {([
@@ -316,16 +339,13 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               <Pill
                 key={opt.value}
                 selected={violenceType === opt.value}
-                onClick={() => setViolenceType(opt.value)}
+                onClick={() => { setViolenceType(opt.value); setFieldErrors(p => ({ ...p, violenceType: "" })); }}
               >
                 {opt.label}
                 <span className="text-[11px] opacity-60 font-normal">/ {opt.sw}</span>
               </Pill>
             ))}
           </div>
-          {!violenceType && (
-            <p className="text-xs text-muted-foreground mt-1">Please select one to continue</p>
-          )}
         </Field>
       </Card>
 
@@ -334,14 +354,15 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
         <Field
           label={<L en="Tell us what happened" sw="Tuambie kilichotokea" />}
           required
-          hint={description.length >= 20 ? undefined : `${description.length}/20 minimum characters`}
+          error={fieldErrors.description}
+          hint={!fieldErrors.description && description.length < 20 ? `${description.length}/20 minimum characters` : undefined}
         >
           <Textarea
             value={description}
-            onChange={e => setDescription(e.target.value)}
+            onChange={e => { setDescription(e.target.value); if (e.target.value.trim().length >= 20) setFieldErrors(p => ({ ...p, description: "" })); }}
             rows={5}
             placeholder="In your own words, describe what happened. You don't need to use legal or medical terms."
-            className="rounded-xl resize-none"
+            className={`rounded-xl resize-none ${fieldErrors.description ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
           />
         </Field>
 
@@ -356,8 +377,13 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             />
           </Field>
 
-          <Field label={<L en="County / Region" sw="Kaunti" />} required>
-            <Select value={county} onChange={setCounty} placeholder="Select county">
+          <Field label={<L en="County / Region" sw="Kaunti" />} required error={fieldErrors.county}>
+            <Select
+              value={county}
+              onChange={v => { setCounty(v); if (v) setFieldErrors(p => ({ ...p, county: "" })); }}
+              placeholder="Select county"
+              hasError={!!fieldErrors.county}
+            >
               {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
             </Select>
           </Field>
@@ -468,7 +494,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/20 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <Upload className="w-4 h-4" />
-              Choose files (JPEG, PNG, PDF — max 5 MB each)
+              Choose files (JPEG, PNG, PDF - max 5 MB each)
             </button>
             {screenshotFiles.length > 0 && (
               <div className="space-y-1.5 mt-2">
@@ -614,14 +640,16 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             <Field
               label={<L en="Create a password (minimum 8 characters)" sw="Weka nenosiri (angalau herufi 8)" />}
               required
+              error={fieldErrors.password}
             >
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); if (e.target.value.length >= 8) setFieldErrors(p => ({ ...p, password: "" })); }}
                   placeholder="Something memorable and unique"
-                  className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className={`w-full rounded-xl border bg-background px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2
+                    ${fieldErrors.password ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"}`}
                 />
                 <button
                   type="button"
@@ -631,9 +659,6 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {password.length > 0 && password.length < 8 && (
-                <p className="text-xs text-destructive">At least 8 characters required</p>
-              )}
             </Field>
 
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900 space-y-0.5">
@@ -664,7 +689,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       {/* ── Submit ────────────────────────────────────────────────── */}
       <Button
         onClick={handleSubmit}
-        disabled={!canSubmit() || loading}
+        disabled={loading}
         className="w-full h-12 text-sm font-bold rounded-xl"
       >
         {loading || uploading ? (

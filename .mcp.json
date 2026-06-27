@@ -3,6 +3,11 @@
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp"
+    },
+    "next-devtools": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
     }
   }
 }
