@@ -17,16 +17,15 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            );
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have proxy refreshing
-            // user sessions.
-          }
+        setAll() {
+          // Intentional no-op. Token refresh is handled entirely by proxy.ts,
+          // which calls getUser() once per request and writes refreshed tokens
+          // to both request.cookies and the response headers.
+          //
+          // Writing cookies from a Server Component in Next.js 15+ succeeds
+          // (unlike v14 where it threw), which causes Next.js App Router to
+          // detect a "tracked cookie changed during render" and issue an RSC
+          // re-render — infinite loop. Keeping this as a no-op prevents that.
         },
       },
     },

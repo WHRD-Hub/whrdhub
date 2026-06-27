@@ -25,7 +25,14 @@ const VERIF_META: Record<string, { label: string; variant: "secondary" | "info" 
 
 async function DashboardContent() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession() reads the JWT from cookies locally — no network call,
+  // no token refresh, no setAll side-effect. getUser() hits the Supabase
+  // API on every render which can refresh the token and change auth cookies;
+  // Next.js App Router then re-renders because it detects a tracked cookie
+  // changed mid-stream, causing an infinite loop.
+  // Auth is already validated by the proxy before this page is reached.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) redirect("/auth/login");
 
   const { data: profile } = await supabase

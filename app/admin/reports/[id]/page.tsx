@@ -57,7 +57,8 @@ async function ReportDetail({ id }: { id: string }) {
   const profile = report.profiles as { username?: string; is_anonymous?: boolean; email?: string; user_type?: string } | null;
 
   // Log the view
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (user) {
     await supabase.from("report_audit_log").insert({ report_id: id, viewed_by: user.id, action: "viewed" });
   }

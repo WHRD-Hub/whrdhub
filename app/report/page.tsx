@@ -12,7 +12,8 @@ export const metadata = {
 
 async function ReportFormWithAuth() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   const isAuthenticated = !!user;
   const userEmail = user?.email ?? undefined;
   return <ReportForm isAuthenticated={isAuthenticated} userEmail={userEmail} />;

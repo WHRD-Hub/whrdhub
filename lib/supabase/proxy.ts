@@ -39,8 +39,14 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Do not run code between createServerClient and
-  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
+  //
+  // getUser() is the ONLY secure auth check — it validates the JWT with the
+  // Supabase server. It runs once here in the proxy so RSC pages don't need to
+  // call it again. When the token is refreshed, setAll updates request.cookies
+  // so the RSC sees the fresh token. The server.ts setAll is a no-op so no
+  // cookie writes happen during RSC render, preventing the re-render loop.
 
   const { data: { user } } = await supabase.auth.getUser();
 
