@@ -16,10 +16,14 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
     <button
       type="button"
       onClick={handleCopy}
+      aria-label={copied ? `${label} copied to clipboard` : `Copy ${label} to clipboard`}
+      aria-live="polite"
       className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium border border-border bg-background hover:bg-muted transition-colors shrink-0"
     >
-      {copied ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-      {copied ? "Copied!" : label}
+      {copied
+        ? <Check className="w-3 h-3 text-green-600" aria-hidden="true" />
+        : <Copy className="w-3 h-3" aria-hidden="true" />}
+      <span aria-hidden="true">{copied ? "Copied!" : label}</span>
     </button>
   );
 }

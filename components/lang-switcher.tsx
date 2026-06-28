@@ -14,33 +14,46 @@ export function LangSwitcher({ variant = "compact", className = "" }: LangSwitch
   const { language, setLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && open) {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   const current = LANGUAGE_META[language];
 
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(p => !p)}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={`Select language, current: ${current.nativeLabel}`}
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors text-sm font-medium text-foreground select-none"
       >
-        <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
         {variant === "full" ? (
-          <span>{current.flag} {current.nativeLabel}</span>
+          <span aria-hidden="true">{current.flag} {current.nativeLabel}</span>
         ) : (
-          <span className="uppercase">{language}</span>
+          <span aria-hidden="true" className="uppercase">{language}</span>
         )}
-        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
 
       {open && (
@@ -65,7 +78,7 @@ export function LangSwitcher({ variant = "compact", className = "" }: LangSwitch
                 <span className="text-base leading-none">{meta.flag}</span>
                 <span className="flex-1">{meta.nativeLabel}</span>
                 <span className="text-xs text-muted-foreground">{meta.label}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                {isSelected && <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
               </button>
             );
           })}

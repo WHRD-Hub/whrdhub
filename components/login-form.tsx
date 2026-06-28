@@ -101,20 +101,26 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             className="w-full gap-2"
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading || isLoading}
+            aria-label={isGoogleLoading ? l.redirecting : l.continueWithGoogle}
           >
             <GoogleIcon />
-            {isGoogleLoading ? l.redirecting : l.continueWithGoogle}
+            <span aria-hidden="true">{isGoogleLoading ? l.redirecting : l.continueWithGoogle}</span>
           </Button>
 
-          <div className="relative">
+          <div role="separator" aria-label={t.common.or} className="relative">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">{t.common.or}</span>
+              <span aria-hidden="true" className="bg-card px-2 text-muted-foreground">{t.common.or}</span>
             </div>
           </div>
 
+          {/* Error live region */}
+          <div aria-live="assertive" aria-atomic="true" className="sr-only">
+            {error ?? ""}
+          </div>
+
           {/* Email / Username + Password */}
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          <form onSubmit={handleEmailLogin} className="space-y-4" noValidate aria-label="Sign in with email">
             <div className="grid gap-2">
               <Label htmlFor="identifier">{l.usernameOrEmail}</Label>
               <Input
@@ -130,7 +136,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">{l.password}</Label>
-                <Link href="/auth/forgot-password" className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline">
+                <Link
+                  id="forgot-password-hint"
+                  href="/auth/forgot-password"
+                  className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
+                >
                   {l.forgotPassword}
                 </Link>
               </div>
@@ -141,11 +151,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 autoComplete="current-password"
+                aria-describedby="forgot-password-hint"
               />
             </div>
 
             {error && (
-              <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">{error}</p>
+              <p role="alert" className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg flex items-center gap-2">
+                <span aria-hidden="true">⚠</span>{error}
+              </p>
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
@@ -153,8 +166,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             </Button>
           </form>
 
-          <div className="p-3 rounded-xl bg-muted/40 flex items-start gap-2 text-xs text-muted-foreground">
-            <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />
+          <div role="note" aria-label="Anonymous access information" className="p-3 rounded-xl bg-muted/40 flex items-start gap-2 text-xs text-muted-foreground">
+            <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" aria-hidden="true" />
             <span>
               {l.anonHint}
             </span>

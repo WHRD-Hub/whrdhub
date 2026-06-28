@@ -38,6 +38,7 @@ function Pill({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium select-none
         transition-[transform,background-color,border-color,color,box-shadow] duration-150 ease-out
         active:scale-[0.97]
@@ -49,7 +50,7 @@ function Pill({
         }`}
       style={{ willChange: "transform" }}
     >
-      {selected && <Check className="w-3.5 h-3.5 shrink-0" />}
+      {selected && <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
       {children}
     </button>
   );
@@ -73,44 +74,56 @@ function Card({ title, subtitle, children }: {
 }
 
 // ─── field wrapper ────────────────────────────────────────────────────────────
-function Field({ label, hint, required, error, children }: {
+let _fieldId = 0;
+function Field({ label, hint, required, error, children, id: idProp }: {
   label?: React.ReactNode; hint?: string; required?: boolean;
-  error?: string; children: React.ReactNode;
+  error?: string; children: React.ReactNode; id?: string;
 }) {
+  const id = idProp ?? `field-${++_fieldId}`;
+  const errorId = `${id}-error`;
+  const hintId  = `${id}-hint`;
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-semibold text-foreground">
+        <label htmlFor={id} className="block text-sm font-semibold text-foreground">
           {label}
-          {required && <span className="text-destructive ml-0.5">*</span>}
+          {required && <span className="text-destructive ml-0.5" aria-hidden="true">*</span>}
+          {required && <span className="sr-only">(required)</span>}
         </label>
       )}
+      {/* Clone child to inject id + aria props */}
       {children}
       {error
-        ? <p className="text-xs text-destructive font-medium">{error}</p>
-        : hint && <p className="text-xs text-muted-foreground">{hint}</p>
+        ? <p id={errorId} role="alert" className="text-xs text-destructive font-medium flex items-center gap-1">
+            <span aria-hidden="true">⚠</span>{error}
+          </p>
+        : hint && <p id={hintId} className="text-xs text-muted-foreground">{hint}</p>
       }
     </div>
   );
 }
 
 // ─── select ──────────────────────────────────────────────────────────────────
-function Select({ value, onChange, children, placeholder, hasError }: {
+function Select({ value, onChange, children, placeholder, hasError, id, describedBy }: {
   value: string; onChange: (v: string) => void;
   children: React.ReactNode; placeholder?: string; hasError?: boolean;
+  id?: string; describedBy?: string;
 }) {
   return (
     <div className="relative">
       <select
+        id={id}
         value={value}
         onChange={e => onChange(e.target.value)}
+        aria-invalid={hasError ? "true" : undefined}
+        aria-describedby={describedBy}
         className={`w-full appearance-none rounded-xl border bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 pr-9
           ${hasError ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"}`}
       >
         {placeholder && <option value="">{placeholder}</option>}
         {children}
       </select>
-      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
     </div>
   );
 }
@@ -315,6 +328,17 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
 
+      {/* Screen-reader live region — announces validation errors on submit */}
+      <div
+        aria-live="assertive"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {Object.keys(fieldErrors).length > 0 &&
+          `Form has ${Object.keys(fieldErrors).length} error${Object.keys(fieldErrors).length > 1 ? "s" : ""}. ${Object.values(fieldErrors).join(". ")}.`
+        }
+      </div>
+
       {/* ── Context ─────────────────────────────────────────────── */}
       <Card title={tr.sections.aboutReport} subtitle={tr.sections.aboutReportSub}>
         <Field label={L("reportingFor")}>
@@ -356,12 +380,14 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       {/* ── What happened ────────────────────────────────────────── */}
       <Card title={tr.sections.whatHappened} subtitle={tr.sections.whatHappenedSub}>
         <Field
+          id="field-description"
           label={L("description")}
           required
           error={fieldErrors.description}
           hint={!fieldErrors.description && description.length < 20 ? `${description.length}/20 min` : undefined}
         >
           <Textarea
+            id="field-description"
             value={description}
             onChange={e => {
               setDescription(e.target.value);
@@ -369,6 +395,9 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             }}
             rows={5}
             placeholder={tr.fields.descriptionPlaceholder}
+            aria-required="true"
+            aria-invalid={!!fieldErrors.description}
+            aria-describedby={fieldErrors.description ? "field-description-error" : "field-description-hint"}
             className={`rounded-xl resize-none ${fieldErrors.description ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
           />
         </Field>
@@ -384,12 +413,14 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             />
           </Field>
 
-          <Field label={L("county")} required error={fieldErrors.county}>
+          <Field id="field-county" label={L("county")} required error={fieldErrors.county}>
             <Select
+              id="field-county"
               value={county}
               onChange={v => { setCounty(v); if (v) setFieldErrors(p => ({ ...p, county: "" })); }}
               placeholder={tr.fields.countyPlaceholder}
               hasError={!!fieldErrors.county}
+              describedBy={fieldErrors.county ? "field-county-error" : undefined}
             >
               {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
             </Select>
@@ -668,6 +699,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             >
               <div className="relative">
                 <input
+                  id="field-password"
                   type={showPass ? "text" : "password"}
                   value={password}
                   onChange={e => {
@@ -675,15 +707,19 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
                     if (e.target.value.length >= 8) setFieldErrors(p => ({ ...p, password: "" }));
                   }}
                   placeholder={tr.fields.passwordPlaceholder}
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.password}
+                  aria-describedby={fieldErrors.password ? "field-password-error" : undefined}
                   className={`w-full rounded-xl border bg-background px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2
                     ${fieldErrors.password ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
+                  aria-label={showPass ? "Hide password" : "Show password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPass ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                 </button>
               </div>
             </Field>

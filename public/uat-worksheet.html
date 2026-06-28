@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WHRD Hub — UAT Worksheet</title>
+<style>
+  :root {
+    --primary: #5b21b6;
+    --accent: #ea580c;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+    --border: #e5e7eb;
+    --muted: #6b7280;
+    --bg: #f9fafb;
+    --white: #ffffff;
+    --text: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.5; }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 60%, #ea580c 100%);
+    color: white; padding: 60px 48px; page-break-after: always;
+  }
+  .cover h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; }
+  .cover h2 { font-size: 18px; font-weight: 400; opacity: .8; margin-bottom: 32px; }
+  .cover-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; }
+  .cover-meta-item { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 14px 18px; }
+  .cover-meta-item label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; opacity: .7; display: block; margin-bottom: 4px; }
+  .cover-meta-item span { font-weight: 700; font-size: 15px; }
+  .badge { display: inline-block; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); border-radius: 100px; padding: 4px 14px; font-size: 11px; font-weight: 600; margin-top: 20px; }
+
+  /* ── Layout ── */
+  .container { max-width: 1300px; margin: 0 auto; padding: 32px 24px; }
+  .toc { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin-bottom: 32px; }
+  .toc h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--primary); }
+  .toc ol { padding-left: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+  .toc li { font-size: 12px; color: var(--muted); }
+  .toc a { color: var(--primary); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* ── Section headers ── */
+  .section { margin-bottom: 40px; }
+  .section-header {
+    background: var(--primary); color: white;
+    padding: 14px 20px; border-radius: 10px 10px 0 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-header .snum { background: rgba(255,255,255,.2); border-radius: 6px; width: 26px; height: 26px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; }
+  .section-header h2 { font-size: 15px; font-weight: 800; }
+  .section-header .stag { margin-left: auto; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 2px 10px; font-size: 11px; }
+  .subsection { background: white; border: 1px solid var(--border); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .subsection:last-child { border-radius: 0 0 10px 10px; }
+  .subsection-title { background: #f3f4f6; padding: 10px 20px; font-weight: 700; font-size: 12px; color: var(--text); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .subsection-title .tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+  .tag-anon { background: #ede9fe; color: #5b21b6; }
+  .tag-email { background: #dbeafe; color: #1d4ed8; }
+  .tag-google { background: #dcfce7; color: #15803d; }
+  .tag-admin { background: #fef3c7; color: #92400e; }
+  .tag-form { background: #fce7f3; color: #be185d; }
+  .tag-i18n { background: #e0f2fe; color: #0369a1; }
+  .tag-a11y { background: #f0fdf4; color: #166534; }
+
+  /* ── Test table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: #f8fafc; }
+  th { padding: 9px 12px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); border-bottom: 2px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  tr:hover td { background: #fafafa; }
+  .tc-id { width: 80px; font-weight: 700; color: var(--primary); font-size: 11px; white-space: nowrap; }
+  .tc-desc { min-width: 180px; }
+  .tc-steps { min-width: 260px; }
+  .tc-expected { min-width: 160px; }
+  .tc-status { width: 90px; }
+  .tc-comments { min-width: 180px; }
+  ol.steps { padding-left: 16px; }
+  ol.steps li { margin-bottom: 3px; }
+
+  /* ── Status badges ── */
+  .status { display: inline-block; border-radius: 100px; padding: 3px 10px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+  .pass  { background: #dcfce7; color: #15803d; }
+  .fail  { background: #fee2e2; color: #991b1b; }
+  .block { background: #fef3c7; color: #92400e; }
+  .na    { background: #f1f5f9; color: #64748b; }
+  .pending { background: #ede9fe; color: #5b21b6; }
+
+  /* ── Comment box ── */
+  .comment-cell { background: #fffbeb; border: 1px dashed #fcd34d; border-radius: 6px; min-height: 36px; padding: 4px 8px; font-size: 11px; color: #78350f; }
+
+  /* ── Prereq block ── */
+  .prereq { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+  .prereq h4 { color: #9a3412; font-size: 13px; margin-bottom: 8px; }
+  .prereq ul { padding-left: 18px; }
+  .prereq li { margin-bottom: 4px; font-size: 12px; color: #7c2d12; }
+  .prereq .note { font-size: 11px; color: var(--muted); margin-top: 8px; padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid var(--border); }
+
+  /* ── Info cards ── */
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding: 16px 20px; }
+  .info-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .info-card h5 { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .info-card ul { padding-left: 16px; }
+  .info-card li { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .info-card .chip { display:inline-block; background:var(--primary); color:white; font-size:10px; padding:1px 7px; border-radius:100px; margin-right:3px; }
+
+  /* ── Signature block ── */
+  .sig-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .sig-table td { border: 1px solid var(--border); padding: 10px 14px; font-size: 12px; }
+  .sig-table th { border: 1px solid var(--border); padding: 8px 14px; font-size: 11px; background: #f8fafc; font-weight: 700; }
+
+  .pill { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:100px; margin:1px; }
+  .pill-purple { background:#ede9fe; color:#5b21b6; }
+  .pill-blue { background:#dbeafe; color:#1d4ed8; }
+  .pill-green { background:#dcfce7; color:#166534; }
+  .pill-red { background:#fee2e2; color:#991b1b; }
+  .pill-amber { background:#fef3c7; color:#92400e; }
+  .pill-pink { background:#fce7f3; color:#be185d; }
+
+  .field-table td, .field-table th { padding: 8px 12px; border: 1px solid var(--border); font-size: 11px; }
+  .field-table th { background:#f8fafc; font-weight:700; }
+  .field-table { width:100%; border-collapse:collapse; margin: 12px 0; }
+
+  .note-box { margin: 12px 20px; padding: 10px 14px; background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; font-size: 12px; color: #1e40af; }
+  .warn-box  { margin: 12px 20px; padding: 10px 14px; background: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 0 8px 8px 0; font-size: 12px; color: #92400e; }
+
+  @media print {
+    body { font-size: 11px; }
+    .cover { page-break-after: always; }
+    .section { page-break-inside: avoid; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ COVER ═══════════════════════════════ -->
+<div class="cover">
+  <h1>WHRD Hub — Reporting Platform</h1>
+  <h2>User Acceptance Testing (UAT) Worksheet</h2>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><label>Prepared by</label><span>Oliver Wainaina</span></div>
+    <div class="cover-meta-item"><label>Platform</label><span>WHRD Hub</span></div>
+    <div class="cover-meta-item"><label>Date</label><span>27 June 2026</span></div>
+    <div class="cover-meta-item"><label>Environment</label><span>Staging</span></div>
+    <div class="cover-meta-item"><label>Version</label><span>1.0.0-staging</span></div>
+    <div class="cover-meta-item"><label>Status</label><span>In Review</span></div>
+  </div>
+  <div class="badge">CONFIDENTIAL · INTERNAL USE ONLY</div>
+</div>
+
+<!-- ═══════════════════════════════ BODY ════════════════════════════════ -->
+<div class="container">
+
+<!-- ── Table of Contents ── -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#s1">Prerequisites &amp; Staging Setup</a></li>
+    <li><a href="#s2">Report Form Fields — Reference Guide</a></li>
+    <li><a href="#s3">Anonymous User Flow</a></li>
+    <li><a href="#s4">Email &amp; Password User Flow</a></li>
+    <li><a href="#s5">Google Authenticated User Flow</a></li>
+    <li><a href="#s6">Onboarding Flow (All User Types)</a></li>
+    <li><a href="#s7">Dashboard — Filters &amp; Charts</a></li>
+    <li><a href="#s8">Admin Flow — Reports &amp; Fact-Checking</a></li>
+    <li><a href="#s9">Admin — Map Interface</a></li>
+    <li><a href="#s10">Settings — Language &amp; Preferences</a></li>
+    <li><a href="#s11">Multilingual Testing (EN / SW)</a></li>
+    <li><a href="#s12">Accessibility Testing</a></li>
+    <li><a href="#s13">Sign-off &amp; Defect Log</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════ S0 — HOW TO USE ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="snum">★</div>
+    <h2>How to Use This Worksheet</h2>
+  </div>
+  <div class="subsection" style="padding:16px 20px; border-radius:0 0 10px 10px;">
+    <p style="margin-bottom:10px;">For each test case: execute the steps, observe the outcome, then mark the <strong>Result</strong> column as one of:</p>
+    <span class="status pass">PASS</span> &nbsp;
+    <span class="status fail">FAIL</span> &nbsp;
+    <span class="status block">BLOCKED</span> &nbsp;
+    <span class="status na">N/A</span> &nbsp;
+    <span class="status pending">PENDING</span>
+    <p style="margin-top:12px; font-size:12px;">Use the <strong>Comments</strong> column to note bugs, UI issues, copy errors, or improvement ideas. Where a bug is found, note the URL, the action taken, and the actual vs expected outcome. Screenshots are encouraged — paste the filename in the comments cell.</p>
+  </div>
+</div>
+
+<!-- ═══════════════ S1 — PREREQUISITES ═══════════════ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="snum">1</div>
+    <h2>Prerequisites &amp; Staging Setup</h2>
+    <span class="stag">Before Testing</span>
+  </div>
+  <div class="subsection" style="padding:16px 20px;">
+    <div class="prereq">
+      <h4>⚠ Staging Environment Notice</h4>
+      <p style="font-size:12px; margin-bottom:10px;">This platform is in a <strong>Supabase-hosted staging environment</strong>. Google OAuth requires each tester's email to be allowlisted in the Supabase dashboard before they can sign in with Google. The platform owner (Oliver Wainaina) must add each tester's email before their session begins.</p>
+      <ul>
+        <li>Send your Gmail address to <strong>oliverwai9na@gmail.com</strong> with subject line <em>"WHRD Hub UAT Access Request"</em></li>
+        <li>Wait for confirmation that your email has been added to the Supabase allowlist</li>
+        <li>For Email/Password sign-up, no pre-registration is needed — you can create an account directly on the platform</li>
+        <li>For Anonymous flow, no setup is required at all</li>
+        <li>Admin accounts must be provisioned manually by Oliver — request admin access separately</li>
+      </ul>
+      <div class="note">Staging URL will be shared via WhatsApp/email by Oliver before testing begins. Do not share publicly.</div>
+    </div>
+    <div class="info-grid">
+      <div class="info-card">
+        <h5>Devices to Test On</h5>
+        <ul>
+          <li>Desktop Chrome (primary)</li>
+          <li>Desktop Firefox</li>
+          <li>Mobile Safari (iPhone)</li>
+          <li>Mobile Chrome (Android)</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h5>Browsers Minimum</h5>
+        <ul>
+          <li>Chrome 120+</li>
+          <li>Safari 17+</li>
+          <li>Firefox 121+</li>
+          <li>Edge 120+</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h5>Test Data Needed</h5>
+        <ul>
+          <li>A Gmail account (for Google flow)</li>
+          <li>Any email for email/password flow</li>
+          <li>No data needed for anonymous flow</li>
+          <li>Admin credentials (from Oliver)</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h5>What NOT to Submit</h5>
+        <ul>
+          <li>Real personal information — use fictional data</li>
+          <li>Real locations — use "Nairobi" generically</li>
+          <li>Actual screenshots of violence — use placeholder images</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ S2 — FORM FIELDS REFERENCE ═══════════════ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="snum">2</div>
+    <h2>Report Form Fields — Reference Guide</h2>
+    <span class="stag">Field Glossary</span>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-form">FORM</span> Section 1 — About This Report</div>
+    <div style="padding: 0 12px 12px;">
+      <table class="field-table">
+        <thead><tr><th>Field</th><th>English Label</th><th>Swahili Label</th><th>What It Means</th><th>Required?</th><th>Validation</th></tr></thead>
+        <tbody>
+          <tr><td>Reporting For</td><td>Who are you reporting for?</td><td>Unaripoti kwa ajili ya nani?</td><td>Clarifies if the reporter is the victim or acting on behalf of someone else. Changes how case workers approach the case. <strong>Reporting for a child</strong> triggers child-protection routing; <strong>community</strong> allows aggregate data.</td><td>No (defaults to "Myself")</td><td>Pill selection only</td></tr>
+          <tr><td>Violence Type</td><td>Where did the violence happen?</td><td>Unyanyasaji ulitokea wapi?</td><td><strong>Online</strong>: harassment via digital platforms (social media, messaging, email). <strong>Physical/In-person</strong>: real-world GBV. <strong>Both</strong>: online violence accompanied by or escalating to physical harm. Selecting Online or Both reveals the evidence section.</td><td><span class="pill pill-red">YES</span></td><td>Must select one before submit</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection-title"><span class="tag tag-form">FORM</span> Section 2 — What Happened</div>
+    <div style="padding: 0 12px 12px;">
+      <table class="field-table">
+        <thead><tr><th>Field</th><th>EN Label</th><th>SW Label</th><th>What It Means</th><th>Required?</th><th>Validation</th></tr></thead>
+        <tbody>
+          <tr><td>Description</td><td>Tell us what happened</td><td>Tuambie kilichotokea</td><td>Free-text narrative. No medical or legal terminology required. The most important field — case workers use this to assess severity and required support.</td><td><span class="pill pill-red">YES</span></td><td>Minimum 20 characters. Counter shows progress (e.g. "14/20"). Red border + red error text if too short on submit.</td></tr>
+          <tr><td>When</td><td>Approximately when?</td><td>Takriban lini?</td><td>Date the incident occurred. Cannot be a future date.</td><td>No</td><td>Date picker; max = today</td></tr>
+          <tr><td>County / Region</td><td>County / Region</td><td>Kaunti / Mkoa</td><td>Location of the incident, used for geographic analysis. Shows on the admin map.</td><td><span class="pill pill-red">YES</span></td><td>Dropdown — must select one</td></tr>
+          <tr><td>Location (optional)</td><td>Location (optional)</td><td>Mahali (hiari)</td><td>More specific location detail — e.g. "home", "workplace". Never shown on public maps.</td><td>No</td><td>Free text, no restriction</td></tr>
+          <tr><td>Is Ongoing</td><td>This is still happening</td><td>Hii bado inaendelea</td><td>Checkbox. Flags the case as active/urgent for case workers. Affects prioritisation.</td><td>No</td><td>Checkbox toggle</td></tr>
+          <tr><td>GPS (auto)</td><td>(not user-visible)</td><td>—</td><td>Browser geolocation captured silently on form load. Used only for anonymised map visualisation. Not linked to identity. A green notice appears if captured.</td><td>No</td><td>Auto — browser permission prompt</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection-title"><span class="tag tag-form">FORM</span> Section 3 — Who Did This (Optional)</div>
+    <div style="padding: 0 12px 12px;">
+      <table class="field-table">
+        <thead><tr><th>Field</th><th>EN Label</th><th>SW Label</th><th>What It Means</th><th>Required?</th></tr></thead>
+        <tbody>
+          <tr><td>Perpetrator Type</td><td>Who did this?</td><td>Ni nani aliyefanya hivi?</td><td>Pill selection. Options: Government/Police, Partner/Spouse, Family member, Employer/Colleague, Stranger/Online group, Unknown. When a perpetrator is selected, a text box appears for optional detail (name, title, organisation). <strong>This entire section is optional</strong> — reporters should only share what feels safe.</td><td>No</td><td>Pill toggle; detail text box appears on selection</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection-title"><span class="tag tag-form">FORM</span> Section 4 — Online Evidence (TFGBV Section)</div>
+    <div class="note-box">This section only appears when Violence Type is set to <strong>Online</strong> or <strong>Both</strong>. TFGBV = Technology-Facilitated Gender-Based Violence. If reporting physical-only violence, this section is hidden entirely.</div>
+    <div style="padding: 0 12px 12px;">
+      <table class="field-table">
+        <thead><tr><th>Field</th><th>EN Label</th><th>SW Label</th><th>What It Means</th><th>Required?</th></tr></thead>
+        <tbody>
+          <tr><td>Platform</td><td>Platform</td><td>Jukwaa</td><td>The digital platform where the abuse occurred (Facebook, WhatsApp, Twitter/X, TikTok, etc.). Dropdown with 12 options including "Other".</td><td>No</td><td>Dropdown</td></tr>
+          <tr><td>Link</td><td>Link to the content (optional)</td><td>Kiungo cha maudhui (hiari)</td><td>URL to the specific offending content — a post, profile, or message. Helps case workers locate and document evidence before it is deleted.</td><td>No</td><td>URL field; must begin with https://</td></tr>
+          <tr><td>Screenshots</td><td>Upload screenshots (optional)</td><td>Pakia picha za skrini (hiari)</td><td>Up to 10 image files (JPEG, PNG, PDF). Max 5 MB each. Stored securely and only viewable by authorised case workers. If not signed in, upload is skipped (files too sensitive to hold without account linkage).</td><td>No</td><td>Max 10 files; JPEG/PNG/PDF; 5 MB limit; remove button per file</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection-title"><span class="tag tag-form">FORM</span> Section 5 — Support Needed</div>
+    <div style="padding: 0 12px 12px;">
+      <table class="field-table">
+        <thead><tr><th>Field</th><th>EN</th><th>SW</th><th>What It Means</th></tr></thead>
+        <tbody>
+          <tr><td>Support Type</td><td>Type of support needed</td><td>Aina ya msaada unaohitajika</td><td>Multi-select pills. Options: Legal support, Medical care, Counselling, Digital security, Safe shelter, Referral, Other. Selecting "Other" reveals a text box. Multiple can be selected simultaneously — each lights up with a check icon.</td></tr>
+          <tr><td>Urgency</td><td>How urgent is your situation?</td><td>Hali yako ni ya haraka kiasi gani?</td><td>Three choices as full-width buttons: <strong>"I am in danger right now"</strong> (red — immediate), <strong>"This week, help soon"</strong> (normal), <strong>"No rush, documenting"</strong> (grey). Determines case priority in admin queue.</td></tr>
+          <tr><td>Consent to Contact</td><td>I am okay with being contacted by a WHRD Hub defender</td><td>Ninakubali kuwasiliana na mtetezi wa WHRD Hub</td><td>Checkbox. When ticked, reveals two fields: Preferred method (Phone/WhatsApp/Email/SMS) and contact details. Without consent, defenders cannot proactively reach out.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection-title"><span class="tag tag-form">FORM</span> Section 6 — Account / Access (Anonymous Users Only)</div>
+    <div class="warn-box">This section is only shown to <strong>unauthenticated users</strong>. Signed-in users (Google or Email/Password) see only their email and a green "Signed in" badge instead.</div>
+    <div style="padding: 0 12px 12px;">
+      <table class="field-table">
+        <thead><tr><th>Field</th><th>What It Means</th><th>Required?</th></tr></thead>
+        <tbody>
+          <tr><td>Auto Username Notice</td><td>Informational banner: the system will generate a unique username automatically (e.g. "brave-shield-k4x2"). The reporter does not choose their username.</td><td>N/A — display only</td></tr>
+          <tr><td>Password</td><td>The reporter sets their own password — minimum 8 characters. This password is the ONLY credential linked to the auto-generated account. No email is attached. There is no password reset option — emphasised by an amber warning box. Reporters must write this down.</td><td><span class="pill pill-red">YES</span> (anonymous only)</td></tr>
+          <tr><td>Consent Declaration</td><td>Three bullet points the reporter implicitly accepts: (1) information is truthful, (2) consent to WHRD Hub storing the report, (3) right to request deletion. Shown for all users at the bottom of this section.</td><td>Display only — no checkbox required</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection-title"><span class="tag tag-form">FORM</span> Reporting For Self vs. Reporting For Others — Key Differences</div>
+    <div style="padding: 12px 20px;">
+      <table class="field-table">
+        <thead><tr><th>Scenario</th><th>What Changes</th><th>Case Worker Notes</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill pill-purple">Myself</span></td><td>Standard flow. Reporter IS the victim. Contact consent applies to the reporter directly.</td><td>Case worker communicates directly with reporter.</td></tr>
+          <tr><td><span class="pill pill-blue">Someone else</span></td><td>Identical UI. Report is logged as "third-party report". Contact details (if given) reach a third party.</td><td>Case worker is aware the reporter is a proxy. Verification of victim consent may be needed.</td></tr>
+          <tr><td><span class="pill pill-pink">A child</span></td><td>Mapped to "someone_else" internally. Triggers child-protection flag in admin view.</td><td>Child safeguarding protocol applies. Case elevated automatically.</td></tr>
+          <tr><td><span class="pill pill-amber">My community</span></td><td>Mapped to "someone_else". Useful for community health workers reporting patterns.</td><td>Report may be aggregated, not individual case-managed.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ S3 — ANONYMOUS USER ═══════════════ -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="snum">3</div>
+    <h2>Anonymous User Flow</h2>
+    <span class="stag">No Account Required</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-anon">ANON</span> 3.1 — Landing Page Navigation</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">AN-001</td>
+          <td>Landing page loads correctly</td>
+          <td><ol class="steps"><li>Open the staging URL in browser</li><li>Observe the page fully loads</li></ol></td>
+          <td>Logo, nav bar with "Report now" button, hero section with headline, safety banner, and emergency strip all visible. No console errors.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-002</td>
+          <td>Language auto-detect on load</td>
+          <td><ol class="steps"><li>Note your browser language setting</li><li>Load the staging URL</li><li>Observe the language shown in the globe icon (top right of nav)</li></ol></td>
+          <td>If browser is set to Swahili/FR/PT/DE/AR, the page renders in that language. If English or unsupported, renders in English.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-003</td>
+          <td>"Report now" CTA in nav</td>
+          <td><ol class="steps"><li>Click the purple "Report now" button in the top right of the navigation bar</li></ol></td>
+          <td>Navigates to <code>/report</code>. Report form page loads with heading and all six sections visible.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-004</td>
+          <td>"Make a report" hero CTA</td>
+          <td><ol class="steps"><li>Click the white "Make a report" button in the hero section</li></ol></td>
+          <td>Navigates to <code>/report</code>. Same as AN-003.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-005</td>
+          <td>Emergency strip links</td>
+          <td><ol class="steps"><li>Scroll to the red emergency strip at the bottom</li><li>Tap "Police: 999"</li></ol></td>
+          <td>Device prompts to call 999 (on mobile) or shows tel: link behaviour (desktop).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-anon">ANON</span> 3.2 — Report Form Filling &amp; Validation</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">AN-010</td>
+          <td>Submit with no fields filled</td>
+          <td><ol class="steps"><li>Navigate to <code>/report</code></li><li>Scroll to bottom and click "Submit report securely" without filling anything</li></ol></td>
+          <td>Three red inline errors appear: <br>• "Please select where the violence happened" under Violence Type<br>• "Please describe what happened (0/20…)" under Description<br>• "Please select a county" under County<br>Page does NOT navigate away.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-011</td>
+          <td>Violence type selection — Online</td>
+          <td><ol class="steps"><li>Click the "Online" pill in Section 1</li><li>Observe the form</li></ol></td>
+          <td>Pill turns purple with a check icon. An "Online evidence" card (Section 4) appears below the "Who did this" card, with Platform, Link, and Screenshots fields.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-012</td>
+          <td>Violence type — Physical (evidence section hidden)</td>
+          <td><ol class="steps"><li>Click "Physical / In person" pill</li><li>Observe the form</li></ol></td>
+          <td>The "Online evidence" card is NOT shown. Only the first four cards visible.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-013</td>
+          <td>Description minimum length counter</td>
+          <td><ol class="steps"><li>Click into the description textarea</li><li>Type 5 characters</li><li>Observe below the text area</li></ol></td>
+          <td>A grey hint shows "5/20 min". As characters are typed, the counter increments. At 20+ characters, the hint disappears.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-014</td>
+          <td>Description error clears on typing</td>
+          <td><ol class="steps"><li>Click submit (triggers errors)</li><li>Note the red description error</li><li>Type 20+ characters into description</li></ol></td>
+          <td>Red error under description disappears once 20 characters are reached.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-015</td>
+          <td>County dropdown selection</td>
+          <td><ol class="steps"><li>Click the county dropdown</li><li>Select "Nairobi"</li></ol></td>
+          <td>Dropdown closes, "Nairobi" shown. County error (if present) clears immediately.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-016</td>
+          <td>Perpetrator type pill + detail field</td>
+          <td><ol class="steps"><li>In Section 3, click "Partner / Spouse" pill</li><li>Observe below</li><li>Type "John Doe" in the detail field</li><li>Click the pill again to deselect</li></ol></td>
+          <td>Pill becomes selected (purple, check). A detail text input appears. On deselect, the text input disappears.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-017</td>
+          <td>Support type multi-select</td>
+          <td><ol class="steps"><li>Click "Legal support"</li><li>Click "Counselling"</li><li>Click "Other"</li><li>Observe the "Other" text box</li></ol></td>
+          <td>All three pills show check icons simultaneously. An "Other" text area appears when "Other" is selected.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-018</td>
+          <td>Urgency — "I am in danger right now"</td>
+          <td><ol class="steps"><li>Click the top urgency button</li></ol></td>
+          <td>Button turns red. The other two revert to default styling.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-019</td>
+          <td>Consent to contact — field reveal</td>
+          <td><ol class="steps"><li>Check "I am okay with being contacted by a WHRD Hub defender"</li><li>Observe below</li></ol></td>
+          <td>Two fields appear: a dropdown for contact method and a text input for phone/email. Both are optional.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-020</td>
+          <td>Password too short</td>
+          <td><ol class="steps"><li>In Account section, type "abc123" (6 chars) in the password field</li><li>Click submit</li></ol></td>
+          <td>Red error under password: "Password must be at least 8 characters." Form does not submit.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-021</td>
+          <td>Password show/hide toggle</td>
+          <td><ol class="steps"><li>Type a password</li><li>Click the eye icon on the right of the password field</li></ol></td>
+          <td>Password text toggles between hidden (dots) and visible. Icon changes between eye and eye-off.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-anon">ANON</span> 3.3 — Account Generation &amp; Successful Submission</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">AN-030</td>
+          <td>Successful anonymous submission</td>
+          <td><ol class="steps"><li>Fill in: Violence type = Online</li><li>Description = "Test incident for UAT purposes in Nairobi." (40+ chars)</li><li>County = Nairobi</li><li>Password = "TestPass123"</li><li>Click "Submit report securely"</li></ol></td>
+          <td>Button shows spinner "Submitting…". After 2–4 seconds, page navigates to <code>/report/success</code> with green check icon, "Report received" heading, and credentials reminder.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-031</td>
+          <td>Auto-login after submission</td>
+          <td><ol class="steps"><li>After successful submission (AN-030)</li><li>Observe the success page</li></ol></td>
+          <td>The success page says "You are already signed in". The user is logged in automatically — no separate login step needed.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-032</td>
+          <td>"Go to your dashboard" button on success page</td>
+          <td><ol class="steps"><li>On success page, click "Go to your dashboard"</li></ol></td>
+          <td>Navigates to <code>/dashboard</code>. User is already signed in — no login screen. Dashboard shows one report.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-033</td>
+          <td>Credentials shown on dashboard</td>
+          <td><ol class="steps"><li>On dashboard, locate "Your login credentials" card</li><li>Note the username (e.g. "brave-shield-k4x2") and email (e.g. "brave-shield-k4x2@whrdhub.local")</li></ol></td>
+          <td>Username and email are shown. A copy button is present next to the email. The credentials section includes a note to save them.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-034</td>
+          <td>Sign out and sign back in as anonymous</td>
+          <td><ol class="steps"><li>Sign out (from dashboard)</li><li>Go to <code>/auth/login</code></li><li>Enter the username shown on the dashboard (NOT email)</li><li>Enter the password you chose</li><li>Click "Log In"</li></ol></td>
+          <td>Successfully signs in. Redirected to dashboard. Report from AN-030 is visible.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-035</td>
+          <td>Wrong password — error message</td>
+          <td><ol class="steps"><li>At login, enter correct username but wrong password</li><li>Click "Log In"</li></ol></td>
+          <td>Red error: "Incorrect username/email or password." No redirect.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-anon">ANON</span> 3.4 — Anonymous User Onboarding</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">AN-040</td>
+          <td>Onboarding triggered on first dashboard visit</td>
+          <td><ol class="steps"><li>After AN-031 (auto-logged in), navigate to <code>/dashboard</code></li></ol></td>
+          <td>If onboarding has not been completed, user is redirected to <code>/onboarding</code> before seeing the dashboard.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-041</td>
+          <td>Role selection on onboarding</td>
+          <td><ol class="steps"><li>On onboarding page, observe the role cards</li><li>Click "WHRD" card</li></ol></td>
+          <td>Card highlights (selected state). "Admin" and "WHRD" are the two options. Selecting one enables the "Continue" button.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-042</td>
+          <td>Terms and conditions accordion</td>
+          <td><ol class="steps"><li>On onboarding, locate the T&amp;C section</li><li>Click on each accordion item to expand</li></ol></td>
+          <td>Each accordion section opens to reveal policy text. All sections must be reviewed before acceptance.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-043</td>
+          <td>Accept T&amp;C and proceed</td>
+          <td><ol class="steps"><li>Select a role (WHRD)</li><li>Check the "I accept the terms and conditions" checkbox</li><li>Click "Proceed to dashboard"</li></ol></td>
+          <td>Onboarding is marked complete. User is redirected to <code>/dashboard</code>. Subsequent visits to /dashboard do NOT redirect to /onboarding.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-044</td>
+          <td>Cannot skip onboarding</td>
+          <td><ol class="steps"><li>Sign in as a new anonymous user</li><li>Manually navigate to <code>/dashboard</code> (bypassing success page)</li></ol></td>
+          <td>Redirected to <code>/onboarding</code>. Cannot access dashboard until onboarding is complete.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S4 — EMAIL & PASSWORD ═══════════════ -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="snum">4</div>
+    <h2>Email &amp; Password User Flow</h2>
+    <span class="stag">Registered Account</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-email">EMAIL</span> 4.1 — Sign Up</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">EP-001</td>
+          <td>Sign up with email and password</td>
+          <td><ol class="steps"><li>Go to <code>/auth/sign-up</code></li><li>Enter a valid email address (use your own test email)</li><li>Enter a password (min 8 chars)</li><li>Click "Sign up"</li></ol></td>
+          <td>Success message shown. A confirmation email is sent to your inbox. Check spam if not received within 2 minutes.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">EP-002</td>
+          <td>Email confirmation link</td>
+          <td><ol class="steps"><li>Open the confirmation email</li><li>Click the confirmation link</li></ol></td>
+          <td>Browser opens, account is confirmed, redirected to onboarding or dashboard.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">EP-003</td>
+          <td>Duplicate email sign up</td>
+          <td><ol class="steps"><li>Try to sign up with an email that already has an account</li></ol></td>
+          <td>Error: "User already registered" or similar. No second account created.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-email">EMAIL</span> 4.2 — Sign In &amp; Onboarding</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">EP-010</td>
+          <td>Sign in with confirmed email</td>
+          <td><ol class="steps"><li>Go to <code>/auth/login</code></li><li>Enter email and password</li><li>Click "Log In"</li></ol></td>
+          <td>Redirect to <code>/onboarding</code> (first time) or <code>/dashboard</code> (returning user).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">EP-011</td>
+          <td>Role selection — complete onboarding</td>
+          <td><ol class="steps"><li>Select "WHRD" on onboarding</li><li>Accept T&amp;C</li><li>Click "Proceed to dashboard"</li></ol></td>
+          <td>Redirected to <code>/dashboard</code>. Role is saved. No credential card shown (authenticated user has real email).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-email">EMAIL</span> 4.3 — Reporting as Authenticated User</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">EP-020</td>
+          <td>Account section hidden / replaced for signed-in user</td>
+          <td><ol class="steps"><li>While signed in, go to <code>/report</code></li><li>Scroll to "Your private access" section</li></ol></td>
+          <td>No password field shown. Instead: green banner "Signed in" with the user's email and a copy button. No credential generation happens.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">EP-021</td>
+          <td>Submit a report as signed-in user</td>
+          <td><ol class="steps"><li>Fill in Violence type = Physical</li><li>Description = 25+ chars</li><li>County = Mombasa</li><li>Click submit</li></ol></td>
+          <td>Toast notification: "Report submitted. Thank you for your courage." Redirected to <code>/dashboard</code>. New report appears in report list.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">EP-022</td>
+          <td>Dashboard shows submitted report</td>
+          <td><ol class="steps"><li>After EP-021, check the dashboard</li><li>Locate your report in the list</li></ol></td>
+          <td>Report appears with date, county, incident type, and status badge (e.g. "Pending review").</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S5 — GOOGLE ═══════════════ -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="snum">5</div>
+    <h2>Google Authenticated User Flow</h2>
+    <span class="stag">OAuth / SSO</span>
+  </div>
+  <div class="prereq" style="margin: 0 0 0 0;">
+    <h4>⚠ Prerequisite</h4>
+    <p style="font-size:12px;">Your Gmail address must be added to Supabase staging by Oliver before this flow can be tested. Send your Gmail to oliverwai9na@gmail.com to request access.</p>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-google">GOOGLE</span> 5.1 — OAuth Flow</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">GO-001</td>
+          <td>Sign in with Google</td>
+          <td><ol class="steps"><li>Go to <code>/auth/login</code></li><li>Click "Continue with Google"</li><li>Select your Google account</li></ol></td>
+          <td>Google account picker appears. After selection, redirected back to platform. Either onboarding (first time) or dashboard.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">GO-002</td>
+          <td>Redirect button shows loading state</td>
+          <td><ol class="steps"><li>Click "Continue with Google"</li><li>Observe the button before Google opens</li></ol></td>
+          <td>Button text changes to "Redirecting…" and is disabled until Google opens.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">GO-003</td>
+          <td>Google sign-in → Onboarding (first time)</td>
+          <td><ol class="steps"><li>Sign in with Google for the first time</li></ol></td>
+          <td>Redirected to <code>/onboarding</code>. Role selection and T&amp;C acceptance required before dashboard.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">GO-004</td>
+          <td>Returning Google user goes to dashboard</td>
+          <td><ol class="steps"><li>Sign out</li><li>Sign back in with Google</li></ol></td>
+          <td>Skips onboarding, goes directly to <code>/dashboard</code>.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">GO-005</td>
+          <td>Google user — report as authenticated</td>
+          <td><ol class="steps"><li>While signed in with Google, go to <code>/report</code></li><li>Observe the account section</li><li>Submit a report with valid fields</li></ol></td>
+          <td>Account section shows Google email in green "Signed in" banner. No password field. After submit, redirected to <code>/dashboard</code> with toast success.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S6 — ONBOARDING ═══════════════ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="snum">6</div>
+    <h2>Onboarding Flow (All User Types)</h2>
+    <span class="stag">First Sign-in</span>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">6.1 — Onboarding Gates &amp; Edge Cases</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">ON-001</td>
+          <td>Cannot proceed without role selected</td>
+          <td><ol class="steps"><li>On onboarding, do NOT select a role</li><li>Click "Proceed" / "Continue"</li></ol></td>
+          <td>Button remains disabled or an error appears. User cannot proceed.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ON-002</td>
+          <td>Cannot proceed without T&amp;C acceptance</td>
+          <td><ol class="steps"><li>Select a role but leave T&amp;C checkbox unchecked</li><li>Click "Proceed"</li></ol></td>
+          <td>Blocked — checkbox must be checked.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ON-003</td>
+          <td>Onboarding persists after refresh</td>
+          <td><ol class="steps"><li>Start onboarding, select role</li><li>Refresh the page without completing</li><li>Re-open onboarding</li></ol></td>
+          <td>Onboarding page shows again — not skipped. Role may or may not persist (note which).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ON-004</td>
+          <td>Completed onboarding — no re-trigger</td>
+          <td><ol class="steps"><li>Complete onboarding</li><li>Sign out and sign back in</li><li>Navigate to <code>/dashboard</code></li></ol></td>
+          <td>No onboarding redirect. Goes directly to dashboard.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S7 — DASHBOARD ═══════════════ -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="snum">7</div>
+    <h2>Dashboard — Filters &amp; Charts (Reporter)</h2>
+    <span class="stag">Authenticated Users</span>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">7.1 — Dashboard Overview</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">DB-001</td>
+          <td>Dashboard loads with stats</td>
+          <td><ol class="steps"><li>Navigate to <code>/dashboard</code></li></ol></td>
+          <td>Summary cards show: Reports Submitted, Under Review, Resolved. Numbers reflect actual reports in the account.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">DB-002</td>
+          <td>Report list — status badges</td>
+          <td><ol class="steps"><li>Observe reports in the list</li></ol></td>
+          <td>Each report shows: incident type chip, county, date, and a status badge (Pending / Under Review / Resolved).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">DB-003</td>
+          <td>Empty state — no reports</td>
+          <td><ol class="steps"><li>Sign in with a brand new account that has no reports</li><li>Go to dashboard</li></ol></td>
+          <td>"No reports yet" empty state shown with a "Make a report" CTA button.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">DB-004</td>
+          <td>Anonymous user — credentials card</td>
+          <td><ol class="steps"><li>Sign in as an anonymous user</li><li>Go to dashboard</li><li>Locate "Your login credentials" card</li></ol></td>
+          <td>Username and virtual email (username@whrdhub.local) shown. Copy button works. Authenticated users do NOT see this card.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">DB-005</td>
+          <td>Settings link accessible</td>
+          <td><ol class="steps"><li>From dashboard, locate a link or button to Settings</li><li>Click it</li></ol></td>
+          <td>Navigates to <code>/settings</code> page showing language selector.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">DB-006</td>
+          <td>Sign out from dashboard</td>
+          <td><ol class="steps"><li>Click "Sign out" on the dashboard</li></ol></td>
+          <td>Session ends, redirected to landing page or login. Accessing <code>/dashboard</code> directly now redirects to login.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S8 — ADMIN FLOW ═══════════════ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="snum">8</div>
+    <h2>Admin Flow — Reports, Fact-Checking &amp; Case Management</h2>
+    <span class="stag">Admin Role Required</span>
+  </div>
+  <div class="prereq" style="margin: 0 0 0 0;">
+    <h4>⚠ Admin Access</h4>
+    <p style="font-size:12px;">Admin accounts are manually provisioned. Contact Oliver to receive admin credentials. Admins have access to <code>/admin</code> — regular users do not. Attempting to visit /admin as a non-admin results in a redirect.</p>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-admin">ADMIN</span> 8.1 — Admin Navigation &amp; Reports List</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">AD-001</td>
+          <td>Admin dashboard loads</td>
+          <td><ol class="steps"><li>Sign in as admin</li><li>Navigate to <code>/admin</code></li></ol></td>
+          <td>Admin dashboard with summary statistics (total reports, under review, resolved). Admin navigation bar visible.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AD-002</td>
+          <td>Non-admin redirected from /admin</td>
+          <td><ol class="steps"><li>Sign in as a WHRD user</li><li>Manually navigate to <code>/admin</code></li></ol></td>
+          <td>Redirected away — either to <code>/dashboard</code> or a "Not authorised" page. Cannot access admin panel.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AD-003</td>
+          <td>Reports list shows all submissions</td>
+          <td><ol class="steps"><li>Go to <code>/admin/reports</code></li></ol></td>
+          <td>Table or card list of all reports submitted by all users. Columns: ID, user, county, type, status, date, urgency.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AD-004</td>
+          <td>Filter reports by status</td>
+          <td><ol class="steps"><li>On reports list, use the status filter</li><li>Select "Pending"</li></ol></td>
+          <td>List filters to show only pending reports. Other statuses not visible.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AD-005</td>
+          <td>Open individual report</td>
+          <td><ol class="steps"><li>Click on any report in the list</li></ol></td>
+          <td>Navigates to <code>/admin/reports/[id]</code>. Full report details shown: description, county, perpetrator, urgency, support needed, and reporter info.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AD-006</td>
+          <td>Admin can also submit a report</td>
+          <td><ol class="steps"><li>As admin, navigate to <code>/report</code></li><li>Fill in the form and submit</li></ol></td>
+          <td>Admin can submit reports on behalf of survivors (in-person intake). Report is linked to admin's account. Behaves identically to authenticated user flow — no password field shown.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-admin">ADMIN</span> 8.2 — Fact-Checking &amp; Case Status</div>
+    <div class="note-box">Fact-checking is the process by which an admin reviews a submitted report, verifies available information, and updates the case status. The fact-check form is inside the individual report page.</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">FC-001</td>
+          <td>Fact-check form visible on report page</td>
+          <td><ol class="steps"><li>Open any individual report at <code>/admin/reports/[id]</code></li><li>Scroll to the fact-check section</li></ol></td>
+          <td>A form with: status dropdown (Pending/Under Review/Fact-Checked/Resolved/Rejected), admin notes field, and a "Save" button.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">FC-002</td>
+          <td>Change status to "Under Review"</td>
+          <td><ol class="steps"><li>On report detail page, open the status dropdown</li><li>Select "Under Review"</li><li>Add a note: "Reviewed by UAT tester — initial intake"</li><li>Click "Save"</li></ol></td>
+          <td>Status updates immediately. Toast or success indicator shown. Reporter's dashboard now shows "Under Review" badge on their report.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">FC-003</td>
+          <td>Change status to "Resolved"</td>
+          <td><ol class="steps"><li>Change status to "Resolved"</li><li>Add note: "Case resolved — support provided"</li><li>Save</li></ol></td>
+          <td>Status = Resolved shown on detail page. Reporter's dashboard "Resolved" count increments.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">FC-004</td>
+          <td>Admin notes field</td>
+          <td><ol class="steps"><li>Type a long note (200+ chars) in admin notes</li><li>Save</li><li>Refresh the page</li></ol></td>
+          <td>Note persists after save and page refresh. Character limit (if any) is visible.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">FC-005</td>
+          <td>Reporter type indicator</td>
+          <td><ol class="steps"><li>Open a report submitted by an anonymous user</li><li>Observe the reporter info section</li></ol></td>
+          <td>"Anonymous" badge shown instead of email. Username shown in mono font.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-admin">ADMIN</span> 8.3 — Admin Analytics Dashboard</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">AN-ADM-001</td>
+          <td>Analytics page loads</td>
+          <td><ol class="steps"><li>Go to <code>/admin/analytics</code></li></ol></td>
+          <td>Charts load: reports by county (bar/donut), reports by violence type, reports over time, urgency breakdown, support type distribution.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-ADM-002</td>
+          <td>Charts reflect live data</td>
+          <td><ol class="steps"><li>Submit a new report from another account</li><li>Refresh analytics page</li></ol></td>
+          <td>Charts update to include the new report's county, type, and urgency.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">AN-ADM-003</td>
+          <td>Charts are responsive</td>
+          <td><ol class="steps"><li>Resize browser to mobile width</li><li>Observe analytics page</li></ol></td>
+          <td>Charts reflow and remain readable on narrow screens. No horizontal overflow.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S9 — MAP ═══════════════ -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <div class="snum">9</div>
+    <h2>Admin — Map Interface</h2>
+    <span class="stag">Admin Role Required</span>
+  </div>
+  <div class="note-box">The map shows anonymised incident locations. No personally identifiable information is shown on the map. Pins represent counties or GPS coordinates — not the exact addresses of victims. Admins use the map to understand geographic patterns of GBV.</div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-admin">ADMIN</span> Map Tests</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">MAP-001</td>
+          <td>Map loads with incident pins</td>
+          <td><ol class="steps"><li>As admin, navigate to the map view</li></ol></td>
+          <td>Kenya map rendered. Coloured markers for each report (or county cluster). Map is interactive (zoom/pan).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">MAP-002</td>
+          <td>Click a pin — report summary</td>
+          <td><ol class="steps"><li>Click any map marker/pin</li></ol></td>
+          <td>A popup or sidebar shows: county, incident type, date, urgency level. No victim name or personal details shown.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">MAP-003</td>
+          <td>Map zoom and pan</td>
+          <td><ol class="steps"><li>Use scroll wheel (or pinch on mobile) to zoom in</li><li>Drag to pan</li></ol></td>
+          <td>Map responds smoothly. Markers remain in correct geographic positions.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">MAP-004</td>
+          <td>Filter by incident type</td>
+          <td><ol class="steps"><li>Use any filter controls on the map view</li><li>Select "Online only"</li></ol></td>
+          <td>Map updates to show only online harassment incidents. Physical-only reports hidden.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">MAP-005</td>
+          <td>No personal data exposed</td>
+          <td><ol class="steps"><li>Click every map pin visible</li><li>Inspect popup content for any PII</li></ol></td>
+          <td>No victim name, real address, email, or phone number shown in any popup. Only: county, type, date, urgency.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">MAP-006</td>
+          <td>Map on mobile</td>
+          <td><ol class="steps"><li>Open map on a mobile device or narrow viewport</li></ol></td>
+          <td>Map renders full-width. Pins are tappable. Popups fit on screen.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S10 — SETTINGS ═══════════════ -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <div class="snum">10</div>
+    <h2>Settings — Language &amp; Preferences</h2>
+    <span class="stag">All Users</span>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">10.1 — Language Switcher</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">ST-001</td>
+          <td>Settings page accessible</td>
+          <td><ol class="steps"><li>Navigate to <code>/settings</code></li></ol></td>
+          <td>Settings page loads with a grid of 6 language options: English 🇬🇧, Kiswahili 🇰🇪, Français 🇫🇷, Português 🇧🇷, Deutsch 🇩🇪, العربية 🇸🇦.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ST-002</td>
+          <td>Select French — entire platform updates</td>
+          <td><ol class="steps"><li>Click "Français" on settings page</li><li>Navigate to landing page, report form, and login page</li></ol></td>
+          <td>Toast "Français — Language saved." All page text switches to French. Language persists across navigation.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ST-003</td>
+          <td>Select Arabic — RTL layout</td>
+          <td><ol class="steps"><li>Click "العربية" on settings page</li><li>Observe the page layout</li></ol></td>
+          <td>Page text becomes Arabic. Layout flips to right-to-left (RTL) — text aligns right, layout mirrors. Nav items appear on correct side.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ST-004</td>
+          <td>Language persists after page reload</td>
+          <td><ol class="steps"><li>Select Swahili</li><li>Hard-refresh the page (Ctrl+Shift+R)</li></ol></td>
+          <td>Page reloads in Swahili. Language choice is remembered via localStorage.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ST-005</td>
+          <td>Compact language switcher in nav</td>
+          <td><ol class="steps"><li>Observe the globe icon + language code (e.g. "EN") in the nav bar</li><li>Click it</li></ol></td>
+          <td>A dropdown appears with all 6 language options. Selecting one updates the platform language immediately.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">ST-006</td>
+          <td>Language switcher in login page</td>
+          <td><ol class="steps"><li>Navigate to <code>/auth/login</code></li><li>Observe the top-right of the login form</li><li>Change language</li></ol></td>
+          <td>Language switcher present on login page. Changing language updates all login form text.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S11 — MULTILINGUAL ═══════════════ -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <div class="snum">11</div>
+    <h2>Multilingual Testing — EN / SW &amp; Other Languages</h2>
+    <span class="stag">i18n</span>
+  </div>
+  <div class="note-box">
+    <strong>Dual-language labels (EN and SW only):</strong> When the platform language is English or Swahili, the report form shows bilingual field labels — e.g. "Tell us what happened (Tuambie kilichotokea)". For French, Portuguese, German, and Arabic, only the single translated label is shown — no secondary language.
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-i18n">i18n</span> Language Coverage</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">I18-001</td>
+          <td>EN — dual labels on report form</td>
+          <td><ol class="steps"><li>Set language to English</li><li>Navigate to <code>/report</code></li><li>Inspect field labels</li></ol></td>
+          <td>Field labels show English primary with Swahili secondary in parentheses/muted text. E.g. "County / Region (Kaunti / Mkoa)".</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">I18-002</td>
+          <td>SW — dual labels on report form</td>
+          <td><ol class="steps"><li>Set language to Kiswahili</li><li>Navigate to <code>/report</code></li></ol></td>
+          <td>Labels show Swahili primary with English secondary in muted text. E.g. "Kaunti / Mkoa (County / Region)".</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">I18-003</td>
+          <td>FR — single labels only</td>
+          <td><ol class="steps"><li>Set language to Français</li><li>Navigate to <code>/report</code></li></ol></td>
+          <td>Labels show French only — no secondary English or Swahili. E.g. "Comté / Région".</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">I18-004</td>
+          <td>AR — single labels, RTL form</td>
+          <td><ol class="steps"><li>Set language to العربية</li><li>Navigate to <code>/report</code></li></ol></td>
+          <td>Report form shows Arabic labels only. Form layout is RTL — inputs, dropdowns, and text all align right. Pills still functional.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">I18-005</td>
+          <td>Success page translates</td>
+          <td><ol class="steps"><li>Set language to Português</li><li>Submit a report</li><li>Observe success page</li></ol></td>
+          <td>All success page text is in Portuguese: heading, steps, buttons.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">I18-006</td>
+          <td>Login form translates</td>
+          <td><ol class="steps"><li>Set language to Deutsch</li><li>Navigate to <code>/auth/login</code></li></ol></td>
+          <td>Login form shows German: "Willkommen zurück", "Weiter mit Google", labels and error messages all in German.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">I18-007</td>
+          <td>Landing page full translation</td>
+          <td><ol class="steps"><li>Set each language in turn</li><li>Return to landing page (<code>/</code>)</li><li>Verify: nav, hero, how it works, what you can report, CTA, emergency strip, footer all translate</li></ol></td>
+          <td>All sections fully translated for all 6 languages. No English text bleeds through (except brand name "WHRD Hub").</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">I18-008</td>
+          <td>Error messages translate</td>
+          <td><ol class="steps"><li>Set language to Swahili</li><li>Submit report with empty required fields</li></ol></td>
+          <td>Inline error messages appear in Swahili, not English.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S12 — ACCESSIBILITY ═══════════════ -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <div class="snum">12</div>
+    <h2>Accessibility Testing</h2>
+    <span class="stag">WCAG 2.1 AA</span>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-a11y">A11Y</span> 12.1 — Keyboard Navigation</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">A11-001</td>
+          <td>Tab through report form</td>
+          <td><ol class="steps"><li>On <code>/report</code>, press Tab repeatedly from the top</li><li>Observe focus indicators</li></ol></td>
+          <td>Every interactive element (pills, inputs, dropdowns, checkboxes, buttons) receives visible focus ring. Tab order is logical (top to bottom, left to right).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-002</td>
+          <td>Keyboard-activate a pill</td>
+          <td><ol class="steps"><li>Tab to a Violence Type pill</li><li>Press Enter or Space</li></ol></td>
+          <td>Pill selects (turns purple, check icon appears). Same as click.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-003</td>
+          <td>Lang switcher keyboard</td>
+          <td><ol class="steps"><li>Tab to the globe icon language switcher</li><li>Press Enter to open</li><li>Use arrow keys or Tab to select a language</li><li>Press Enter</li></ol></td>
+          <td>Dropdown opens, language navigable by keyboard, selection works without mouse.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-004</td>
+          <td>Skip to main content</td>
+          <td><ol class="steps"><li>On landing page, press Tab once</li></ol></td>
+          <td>A "Skip to main content" link appears (may be visually hidden but visible on focus). Pressing Enter skips nav and jumps to main content.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-a11y">A11Y</span> 12.2 — Colour Contrast &amp; Visual</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">A11-010</td>
+          <td>Primary button contrast</td>
+          <td><ol class="steps"><li>Inspect the purple "Report now" or "Submit report securely" button</li><li>Use browser dev tools or contrast checker</li></ol></td>
+          <td>White text on purple background. Contrast ratio ≥ 4.5:1 (WCAG AA).</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-011</td>
+          <td>Error text contrast</td>
+          <td><ol class="steps"><li>Trigger a form validation error</li><li>Check the red error text contrast against the white background</li></ol></td>
+          <td>Red error text meets 4.5:1 contrast ratio minimum.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-012</td>
+          <td>Focus ring visible on all inputs</td>
+          <td><ol class="steps"><li>Tab to each input type: text input, dropdown, checkbox, pill button</li></ol></td>
+          <td>All elements show a visible focus ring (purple ring or equivalent). No element receives focus without visual indication.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-013</td>
+          <td>Dark mode (if supported)</td>
+          <td><ol class="steps"><li>Enable OS dark mode</li><li>Reload the platform</li></ol></td>
+          <td>If dark mode is supported, all text remains legible. No white-on-white or black-on-black combinations.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-a11y">A11Y</span> 12.3 — Screen Reader &amp; Semantic HTML</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">A11-020</td>
+          <td>Form labels announced by screen reader</td>
+          <td><ol class="steps"><li>Enable VoiceOver (Mac) or NVDA (Windows)</li><li>Tab through the report form</li></ol></td>
+          <td>Each input is announced with its label. Required fields announced as "required". Errors announced when they appear.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-021</td>
+          <td>Page headings structure</td>
+          <td><ol class="steps"><li>Use a screen reader heading navigation (H key in NVDA)</li><li>Navigate headings on the landing page</li></ol></td>
+          <td>Logical heading hierarchy: H1 for page title, H2 for sections, H3 for subsections. No heading levels skipped.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-022</td>
+          <td>Error alerts accessible</td>
+          <td><ol class="steps"><li>Submit a form with errors</li><li>With screen reader on, observe what is announced</li></ol></td>
+          <td>Error messages are announced — either via aria-live region or by focus moving to error. User knows what went wrong without visual inspection.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title"><span class="tag tag-a11y">A11Y</span> 12.4 — Mobile &amp; Touch</div>
+    <table>
+      <thead><tr><th class="tc-id">ID</th><th class="tc-desc">Test Case</th><th class="tc-steps">Steps</th><th class="tc-expected">Expected Outcome</th><th class="tc-status">Result</th><th class="tc-comments">Comments</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tc-id">A11-030</td>
+          <td>Touch target sizes</td>
+          <td><ol class="steps"><li>On mobile, attempt to tap each pill, button, and checkbox</li></ol></td>
+          <td>All interactive elements are comfortably tappable — minimum 44×44px touch target. No mis-taps needed.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-031</td>
+          <td>Pinch-zoom not disabled</td>
+          <td><ol class="steps"><li>On mobile, attempt to pinch-zoom the page</li></ol></td>
+          <td>Pinch zoom works. The viewport meta tag does NOT block user scaling.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+        <tr>
+          <td class="tc-id">A11-032</td>
+          <td>No horizontal scroll</td>
+          <td><ol class="steps"><li>On mobile at 375px width, scroll through each page</li></ol></td>
+          <td>No horizontal scrollbar or overflow on any page. All content fits within the viewport width.</td>
+          <td><span class="status pending">PENDING</span></td>
+          <td><div class="comment-cell"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ S13 — SIGN OFF ═══════════════ -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <div class="snum">13</div>
+    <h2>Sign-off &amp; Defect Log</h2>
+    <span class="stag">Final Step</span>
+  </div>
+  <div class="subsection" style="padding:20px;">
+    <h3 style="margin-bottom:12px; font-size:13px;">Defect Log</h3>
+    <table>
+      <thead><tr>
+        <th>Defect ID</th><th>Test Case</th><th>Page / URL</th><th>Severity</th><th>Steps to Reproduce</th><th>Actual Result</th><th>Expected Result</th><th>Assigned To</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>DEF-001</td><td></td><td></td><td><span class="status fail">CRITICAL</span></td><td></td><td></td><td></td><td></td><td><span class="status pending">OPEN</span></td></tr>
+        <tr><td>DEF-002</td><td></td><td></td><td><span class="status block">MAJOR</span></td><td></td><td></td><td></td><td></td><td><span class="status pending">OPEN</span></td></tr>
+        <tr><td>DEF-003</td><td></td><td></td><td><span class="status na">MINOR</span></td><td></td><td></td><td></td><td></td><td><span class="status pending">OPEN</span></td></tr>
+        <tr><td>DEF-004</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>DEF-005</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>DEF-006</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin: 24px 0 12px; font-size:13px;">UAT Sign-off</h3>
+    <table class="sig-table">
+      <thead><tr><th>Role</th><th>Name</th><th>Date Tested</th><th>Overall Result</th><th>Signature / Initials</th></tr></thead>
+      <tbody>
+        <tr><td>Product Owner</td><td>Oliver Wainaina</td><td></td><td></td><td></td></tr>
+        <tr><td>UAT Tester 1</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>UAT Tester 2</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>UAT Tester 3</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>UAT Tester 4</td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:24px; padding:16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; font-size:12px;">
+      <strong style="color:#166534;">UAT Pass Criteria:</strong>
+      <ul style="padding-left:18px; margin-top:8px; color:#15803d;">
+        <li>All CRITICAL test cases pass</li>
+        <li>≥ 90% of MAJOR test cases pass</li>
+        <li>All three user flows (Anonymous, Email, Google) complete end-to-end without blocking defects</li>
+        <li>Admin can view, fact-check, and update reports</li>
+        <li>Platform is usable in English and Swahili</li>
+        <li>No PII exposed on the map or admin list</li>
+      </ul>
+    </div>
+
+    <p style="margin-top:20px; font-size:11px; color:var(--muted); text-align:center;">
+      Prepared by Oliver Wainaina · WHRD Hub Reporting Platform · 27 June 2026 · CONFIDENTIAL
+    </p>
+  </div>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
