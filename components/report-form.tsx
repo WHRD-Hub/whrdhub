@@ -191,6 +191,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   // What happened
   const [description, setDescription]   = useState("");
   const [county, setCounty]             = useState("");
+  const [countyOther, setCountyOther]   = useState("");
   const [locationDesc, setLocationDesc] = useState("");
   const [occurredDate, setOccurredDate] = useState("");
   const [isOngoing, setIsOngoing]       = useState(false);
@@ -276,7 +277,9 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
         reporting_for: reportingFor === "child" || reportingFor === "community"
           ? "someone_else"
           : (reportingFor as "self"|"someone_else"),
-        county,
+        county: county === "Other / Outside Kenya" && countyOther.trim()
+          ? countyOther.trim()
+          : county,
         location_description: locationDesc || undefined,
         latitude:  latitude  ?? undefined,
         longitude: longitude ?? undefined,
@@ -419,13 +422,24 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
             <Select
               id="field-county"
               value={county}
-              onChange={v => { setCounty(v); if (v) setFieldErrors(p => ({ ...p, county: "" })); }}
+              onChange={v => { setCounty(v); setCountyOther(""); if (v) setFieldErrors(p => ({ ...p, county: "" })); }}
               placeholder={tr.fields.countyPlaceholder}
               hasError={!!fieldErrors.county}
               describedBy={fieldErrors.county ? "field-county-error" : undefined}
             >
               {COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
             </Select>
+            {county === "Other / Outside Kenya" && (
+              <input
+                type="text"
+                value={countyOther}
+                onChange={e => setCountyOther(e.target.value)}
+                placeholder="Please specify your country or region"
+                className="mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Country or region name"
+                autoFocus
+              />
+            )}
           </Field>
         </div>
 

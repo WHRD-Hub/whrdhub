@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { FileText, Clock, CheckCircle, Plus, Briefcase, AlertTriangle, User, Shield } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
+import { LangSwitcher } from "@/components/lang-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CredentialsBanner } from "@/components/credentials-banner";
@@ -90,6 +91,7 @@ async function DashboardContent() {
                 <Shield className="w-3 h-3" /> Admin
               </span>
             )}
+            <LangSwitcher variant="compact" />
             <Link href="/profile"
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted">
               <User className="w-3.5 h-3.5" />

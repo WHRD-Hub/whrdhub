@@ -3,6 +3,7 @@ import { Shield, ArrowLeft, Lock } from "lucide-react";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import ReportForm from "@/components/report-form";
+import { LangSwitcher } from "@/components/lang-switcher";
 
 export const metadata = {
   title: "Make a Report | WHRD Hub",
@@ -30,9 +31,12 @@ export default function ReportPage() {
             <ArrowLeft className="w-4 h-4" />
             WHRD Hub
           </Link>
-          <div className="flex items-center gap-2 text-sm text-white/80">
-            <Lock className="w-4 h-4" />
-            <span>Secure and confidential</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-white/80">
+              <Lock className="w-4 h-4" />
+              <span>Secure and confidential</span>
+            </div>
+            <LangSwitcher variant="compact" className="[&>button]:bg-white/10 [&>button]:border-white/20 [&>button]:text-white [&>button]:hover:bg-white/20" />
           </div>
         </div>
       </header>

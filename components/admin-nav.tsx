@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, FileText, Briefcase, BarChart2, Map, Shield, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { LangSwitcher } from "@/components/lang-switcher";
 
 const navLinks = [
   { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard },
@@ -25,10 +26,10 @@ export function AdminNav({ username, userType }: { username: string; userType: s
   };
 
   return (
-    <aside className="w-56 shrink-0 bg-primary text-primary-foreground min-h-screen flex flex-col">
+    <aside className="w-56 shrink-0 bg-primary text-primary-foreground h-screen flex flex-col">
       <div className="p-5 border-b border-white/10">
-        <p className="font-black text-lg leading-tight">WHRD Hub</p>
-        <div className="flex items-center gap-1.5 mt-1">
+        <img src="/main-logo.png" alt="WHRD Hub" className="h-8 w-auto object-contain brightness-0 invert mb-2" />
+        <div className="flex items-center gap-1.5">
           <Shield className="w-3 h-3 opacity-60" />
           <p className="text-xs opacity-60 capitalize">{userType} Console</p>
         </div>
@@ -65,6 +66,10 @@ export function AdminNav({ username, userType }: { username: string; userType: s
             <p className="text-[11px] opacity-60 capitalize">{userType}</p>
           </div>
         </div>
+
+        {/* Language switcher */}
+        <LangSwitcher variant="compact" className="w-full [&>button]:w-full [&>button]:justify-start [&>button]:bg-white/10 [&>button]:border-white/20 [&>button]:text-white [&>button]:hover:bg-white/20" />
+
         <button
           onClick={logout}
           className="flex items-center gap-2 text-xs text-primary-foreground/60 hover:text-primary-foreground transition-colors w-full px-2 py-1.5 rounded-lg hover:bg-white/5"
