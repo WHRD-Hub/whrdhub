@@ -314,8 +314,10 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       } else {
         setError(result.error || "Something went wrong. Please try again.");
       }
-    } catch {
-      setError("An unexpected error occurred. Please try again.");
+    } catch (err) {
+      console.error("Report submission error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

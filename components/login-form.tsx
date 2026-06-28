@@ -81,8 +81,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="flex items-center justify-between mb-2">
-        <div>
-          <p className="font-bold text-xl text-primary">WHRD Hub</p>
+        <div className="flex items-center gap-3">
+          <img src="/main-logo.png" alt="WHRD Hub" className="h-12 w-auto object-contain" />
           <p className="text-xs text-muted-foreground">Protect · Heal · Nurture</p>
         </div>
         <LangSwitcher variant="compact" />

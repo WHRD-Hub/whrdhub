@@ -103,7 +103,8 @@ export async function submitReport(data: ReportData): Promise<SubmitReportResult
     });
 
     if (signupError || !signupData.user) {
-      return { success: false, error: "Could not create your secure account. Please try again." };
+      console.error("Anonymous account creation error:", signupError);
+      return { success: false, error: signupError?.message ?? "Could not create your secure account. Please try again." };
     }
     userId = signupData.user.id;
 

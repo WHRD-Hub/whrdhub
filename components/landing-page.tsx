@@ -25,16 +25,7 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       <nav aria-label="Main navigation" className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-3.5 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-3" aria-label="WHRD Hub home">
-            <img src="/icon.png" alt="" role="presentation" className="w-9 h-9" />
-            <div className="leading-tight">
-              <div>
-                <span className="font-black text-primary text-[15px] tracking-tight">WHRD</span>
-                <span className="font-black text-accent text-[15px] tracking-tight">HUB</span>
-              </div>
-              <p className="text-[9px] text-muted-foreground font-semibold tracking-widest uppercase leading-none">
-                Women Human Rights Defenders
-              </p>
-            </div>
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-10 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-2">
             <LangSwitcher variant="compact" />
@@ -223,11 +214,7 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       <footer aria-label="Site footer" className="border-t border-border py-10 px-6 bg-white">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/icon.png" alt="" role="presentation" className="w-8 h-8" />
-            <div>
-              <p className="font-black text-sm"><span className="text-primary">WHRD</span><span className="text-accent">HUB</span></p>
-              <p className="text-[9px] text-muted-foreground font-semibold tracking-widest uppercase">Women Human Rights Defenders</p>
-            </div>
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
           </div>
           <div className="flex flex-col md:flex-row items-center gap-4">
             <LangSwitcher variant="full" />

@@ -155,8 +155,7 @@ export function ProfileClient({
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div className="flex items-center gap-2">
-              <img src="/icon.png" alt="WHRD Hub" className="w-7 h-7" />
-              <span className="font-bold text-sm text-primary">WHRD<span className="text-accent">HUB</span></span>
+              <img src="/main-logo.png" alt="WHRD Hub" className="h-8 w-auto object-contain" />
             </div>
           </div>
           <form action="/auth/signout" method="post">
