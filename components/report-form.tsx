@@ -518,7 +518,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
                 type="url"
                 value={link}
                 onChange={e => setLink(e.target.value)}
-                placeholder="https://..."
+                placeholder={platform === "Signal" ? "signal://..." : "https://..."}
                 className="w-full rounded-xl border border-input bg-background pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>

@@ -33,7 +33,7 @@ export function AdminNav({ username, userType }: { username: string; userType: s
   const NavContent = () => (
     <>
       <div className="p-5 border-b border-white/10">
-        <img src="/main-logo.png" alt="WHRD Hub" className="h-8 w-auto object-contain brightness-0 invert mb-2" />
+        <img src="/main-logo.png" alt="WHRD Hub" className="h-10 w-auto object-contain mb-3" />
         <div className="flex items-center gap-1.5">
           <Shield className="w-3 h-3 opacity-60" />
           <p className="text-xs opacity-60 capitalize">{userType} Console</p>

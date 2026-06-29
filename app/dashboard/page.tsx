@@ -190,7 +190,7 @@ async function DashboardContent() {
                 const vm = VERIF_META[r.verification_status] || VERIF_META.pending;
                 const services = assignedServices?.filter(a => a.report_id === r.id) ?? [];
                 return (
-                  <div key={r.id} className="bg-white rounded-2xl border border-border p-5 shadow-sm space-y-3">
+                  <Link key={r.id} href={`/dashboard/reports/${r.id}`} className="block bg-white rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/30 transition-all space-y-3">
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex flex-wrap gap-1.5">
@@ -223,7 +223,7 @@ async function DashboardContent() {
                       </div>
                     )}
                     <p className="text-[10px] font-mono text-muted-foreground/60 border-t border-border pt-2">Case ID: {r.id}</p>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
