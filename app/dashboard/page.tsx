@@ -36,8 +36,8 @@ async function DashboardContent() {
     .eq("id", user.id)
     .single();
 
-  // Admin/defender users see the admin console, not the reporter dashboard
-  if (profile && ["admin", "defender"].includes(profile.user_type)) {
+  // Only admin users see the admin console; reporter users see their own reports
+  if (profile && profile.user_type === "admin") {
     redirect("/admin");
   }
 

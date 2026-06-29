@@ -114,9 +114,9 @@ function AccordionItem({
 /* ─────────────────────────────── page ── */
 export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
   // All users (anonymous and new accounts) go straight to terms - role selection deactivated for testing
-  // Everyone becomes a normal user (defender/reporter)
+  // Everyone becomes a normal user (reporter)
   const [step, setStep] = useState<1 | 2>(2);
-  const [selectedRole, setSelectedRole] = useState<Role>("defender");
+  const [selectedRole, setSelectedRole] = useState<Role | "reporter" | null>("reporter");
   const [openAccordions, setOpenAccordions] = useState<Set<number>>(new Set([0]));
   const [accepted, setAccepted] = useState(false);
   const [isPending, startTransition] = useTransition();

@@ -3,8 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-// role is null for anonymous users - they only accept T&C, no role change.
-export async function completeOnboarding(role: "admin" | "defender" | null) {
+// All new users are reporters - T&C only, no role selection
+export async function completeOnboarding(role: "admin" | "defender" | "reporter" | null) {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) redirect("/auth/login");
@@ -14,7 +14,7 @@ export async function completeOnboarding(role: "admin" | "defender" | null) {
     accepted_terms_at: new Date().toISOString(),
   };
 
-  // Only update user_type for staff roles; anonymous reporters keep theirs.
+  // All authenticated users are reporters
   if (role) update.user_type = role;
 
   const { error } = await supabase
@@ -24,5 +24,6 @@ export async function completeOnboarding(role: "admin" | "defender" | null) {
 
   if (error) return { error: error.message };
 
+  // Only admin users go to /admin; everyone else (reporter, anonymous) goes to /dashboard
   redirect(role === "admin" ? "/admin" : "/dashboard");
 }
