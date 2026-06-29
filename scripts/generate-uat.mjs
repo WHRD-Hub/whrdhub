@@ -246,12 +246,12 @@ function ws() {
   fieldRow("Description", "Tell us what happened", "Tuambie kilichotokea",
     "Free-text narrative — the core of the report. No medical or legal language required. Case workers read this first to assess severity and required support type.",
     "YES", "Minimum 20 characters. Live counter shows 'X/20 min'. Red border + red error text on submit if too short.");
-  fieldRow("When", "Approximately when?", "Takriban lini?",
+  fieldRow("When", "Approximately when?", "Siku gani?",
     "Date of the incident. Approximate is fine — reporters do not need to know exact date.", "No", "Date picker; cannot be future date");
   fieldRow("County / Region", "County / Region", "Kaunti / Mkoa",
     "Geographic location of incident. Used for the admin map and aggregate statistics. Covers all 47 Kenyan counties plus 'Other / Outside Kenya'.",
     "YES", "Dropdown — must select. Red border + error if skipped on submit.");
-  fieldRow("Location (optional)", "Location (optional)", "Mahali (hiari)",
+  fieldRow("Location (optional)", "Location (optional)", "Mahali (Hili sio swali la lazima)",
     "More specific than county — e.g. 'home', 'workplace', 'Westgate Mall'. Never shown on public maps.", "No", "Free text, no restriction");
   fieldRow("Is Ongoing", "This is still happening", "Hii bado inaendelea",
     "Checkbox. Flags the case as active — affects urgency prioritisation in the admin queue.", "No", "Checkbox toggle");
@@ -262,7 +262,7 @@ function ws() {
   blank();
   infoRow("SECTION 3 — WHO DID THIS (fully optional)", C.pinkL, C.pink);
   fieldHdr();
-  fieldRow("Perpetrator Type", "Who did this?", "Ni nani aliyefanya hivi?",
+  fieldRow("Perpetrator Type", "Who did this? (Nani alitenda tendo hili?)", "Ni nani aliyefanya hivi?",
     "Pill selection. Options: Government/Police, Partner/Spouse, Family member, Employer/Colleague, Stranger/Online group, Unknown. When selected, a detail text box appears for optional extra info.",
     "No", "Pill toggle. Text box appears on selection, disappears on deselect.");
 
@@ -272,10 +272,10 @@ function ws() {
   fieldRow("Platform", "Platform", "Jukwaa",
     "The digital platform where abuse occurred. 12 options: Facebook, Twitter/X, Instagram, WhatsApp, TikTok, YouTube, Telegram, LinkedIn, Snapchat, Email, SMS, Other.",
     "No", "Dropdown");
-  fieldRow("Link", "Link to the content (optional)", "Kiungo cha maudhui (hiari)",
+  fieldRow("Link", "Link to the content (optional)", "Kiungo cha maudhui (Hili sio swali la lazima)",
     "URL to the offending post, profile, or message. Helps case workers find and document evidence before deletion.",
     "No", "URL input — must start with https://");
-  fieldRow("Screenshots", "Upload screenshots (optional)", "Pakia picha za skrini (hiari)",
+  fieldRow("Screenshots", "Upload screenshots (optional)", "Pakia picha za skrini (Hili sio swali la lazima)",
     "Up to 10 image files (JPEG, PNG, PDF). Max 5 MB each. Stored securely, only viewable by authorised case workers. Upload available for signed-in users.",
     "No", "Max 10 files; each max 5 MB; JPEG/PNG/PDF only; individual remove buttons");
 

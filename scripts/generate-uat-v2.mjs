@@ -336,8 +336,8 @@ function sheetScenarios() {
     "Positive",
     "User is on /report.\nUser has not yet selected a violence type.",
     "No specific test data required.",
-    "1. On /report, locate the 'Where did the violence happen?' section.\n2. Click the 'Online' pill button.\n3. Observe the form below the 'Who did this?' section.",
-    "The 'Online' pill turns purple and displays a white check icon. A new card titled 'Online evidence' appears below the 'Who did this?' section, containing three fields: Platform (dropdown), Link to the content (URL input), and Upload screenshots (file picker). This section is not visible when 'Physical / In person' is selected."
+    "1. On /report, locate the 'Where did the violence happen?' section.\n2. Click the 'Online' pill button.\n3. Observe the form below the 'Who did this? (Nani alitenda tendo hili?)' section.",
+    "The 'Online' pill turns purple and displays a white check icon. A new card titled 'Online evidence' appears below the 'Who did this? (Nani alitenda tendo hili?)' section, containing three fields: Platform (dropdown), Link to the content (URL input), and Upload screenshots (file picker). This section is not visible when 'Physical / In person' is selected."
   );
   tc("TC-009","MOD-02\nAnonymous Flow",
     "Description Character Counter and Minimum Length",
@@ -395,29 +395,29 @@ function sheetScenarios() {
     "Positive",
     "User is on /report.\nViolence type has been selected.",
     "Perpetrator type to select: 'Partner / Spouse'\nDetail text: 'John Doe, self-employed, Westlands'",
-    "1. Scroll to the 'Who did this?' section.\n2. Click the 'Partner / Spouse' pill.\n3. Observe the form below the pills.\n4. In the detail input that appears, type: 'John Doe, self-employed, Westlands'.\n5. Click the 'Partner / Spouse' pill again to deselect it.\n6. Observe the detail input.",
+    "1. Scroll to the 'Who did this? (Nani alitenda tendo hili?)' section.\n2. Click the 'Partner / Spouse' pill.\n3. Observe the form below the pills.\n4. In the detail input that appears, type: 'John Doe, self-employed, Westlands'.\n5. Click the 'Partner / Spouse' pill again to deselect it.\n6. Observe the detail input.",
     "Step 2-3: The 'Partner / Spouse' pill turns purple with a check icon. A text input field appears below the pills labelled 'Any details? (optional)'. Step 4: The text is accepted without restriction. Step 5-6: The pill deselects and the detail text input disappears. This confirms the field is fully conditional on perpetrator selection."
   );
   tc("TC-016","MOD-03\nReport Form",
     "Multi-Select Support Type Pills",
     "Positive",
-    "User is on /report.\nScroll to 'How can we help?' section.",
+    "User is on /report.\nScroll to 'How can we help? (Unataka usaidizi gani?)' section.",
     "Support types to select: Legal support, Counselling, Other\nOther text: 'Temporary housing assistance'",
-    "1. In the 'How can we help?' section, click 'Legal support'.\n2. Click 'Counselling'.\n3. Click 'Other'.\n4. In the text area that appears, enter: 'Temporary housing assistance'.\n5. Click 'Counselling' a second time to deselect it.\n6. Observe which pills remain selected.",
+    "1. In the 'How can we help? (Unataka usaidizi gani?)' section, click 'Legal support'.\n2. Click 'Counselling'.\n3. Click 'Other'.\n4. In the text area that appears, enter: 'Temporary housing assistance'.\n5. Click 'Counselling' a second time to deselect it.\n6. Observe which pills remain selected.",
     "Steps 1-3: Each pill independently turns purple with a check icon. Multiple pills can be selected simultaneously — this is not a single-select control. Step 3-4: Selecting 'Other' reveals a freetext textarea immediately below the pills. Step 5-6: 'Counselling' deselects and reverts to default styling. 'Legal support' and 'Other' remain selected."
   );
   tc("TC-017","MOD-03\nReport Form",
     "Urgency Selection — Immediate Danger Turns Red",
     "Positive",
-    "User is on /report.\nScroll to urgency buttons in 'How can we help?' section.",
+    "User is on /report.\nScroll to urgency buttons in 'How can we help? (Unataka usaidizi gani?)' section.",
     "No specific data required.",
-    "1. In the 'How can we help?' section, locate the three urgency buttons.\n2. Click 'I am in danger right now' (the top button).\n3. Observe the button colour.\n4. Click 'No rush, documenting' (the bottom button).\n5. Observe both buttons.",
+    "1. In the 'How can we help? (Unataka usaidizi gani?)' section, locate the three urgency buttons.\n2. Click 'I am in danger right now' (the top button).\n3. Observe the button colour.\n4. Click 'No rush, documenting' (the bottom button).\n5. Observe both buttons.",
     "Step 2-3: The 'I am in danger right now' button turns red with white text, indicating critical urgency. Step 4-5: 'No rush, documenting' becomes selected (default styling). The 'I am in danger right now' button reverts to its default state. Only one urgency level can be selected at a time."
   );
   tc("TC-018","MOD-03\nReport Form",
     "Consent to Contact — Reveals Contact Fields",
     "Positive",
-    "User is on /report.\nScroll to consent checkbox in 'How can we help?' section.",
+    "User is on /report.\nScroll to consent checkbox in 'How can we help? (Unataka usaidizi gani?)' section.",
     "Contact method: WhatsApp\nContact value: +254 7XX XXX XXX (fictional number)",
     "1. Locate the checkbox 'I am okay with being contacted by a WHRD Hub defender'.\n2. Check the checkbox.\n3. Observe the form below the checkbox.\n4. In the contact method dropdown, select 'WhatsApp'.\n5. In the contact detail field, enter: +254 700 000 000.\n6. Uncheck the checkbox.\n7. Observe the contact fields.",
     "Step 2-3: Two fields appear below the checkbox: a dropdown for 'Preferred method' (options: Phone call, WhatsApp, Email, SMS) and a text input for 'Phone number or email'. Step 4-5: Fields accept input normally. Step 6-7: Both contact fields disappear. Unchecking consent hides the contact fields entirely."
