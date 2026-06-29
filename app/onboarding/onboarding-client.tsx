@@ -113,9 +113,10 @@ function AccordionItem({
 
 /* ─────────────────────────────── page ── */
 export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
-  // Anonymous users go straight to terms (step 2); staff start at step 1
-  const [step, setStep] = useState<1 | 2>(isAnon ? 2 : 1);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  // All users (anonymous and new accounts) go straight to terms - role selection deactivated for testing
+  // Everyone becomes a normal user (defender/reporter)
+  const [step, setStep] = useState<1 | 2>(2);
+  const [selectedRole, setSelectedRole] = useState<Role>("defender");
   const [openAccordions, setOpenAccordions] = useState<Set<number>>(new Set([0]));
   const [accepted, setAccepted] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -137,9 +138,9 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
     });
   };
 
-  // Step count display
-  const totalSteps = isAnon ? 1 : 2;
-  const displayStep = isAnon ? 1 : step;
+  // Step count display - role selection deactivated, all users see only terms step
+  const totalSteps = 1;
+  const displayStep = 1;
 
   return (
     <div className="min-h-[100dvh] bg-muted/30 flex flex-col">
@@ -147,120 +148,28 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
       <header className="bg-white border-b border-border sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-8 w-auto object-contain" />
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
           </div>
 
-          {/* Step indicator */}
-          {!isAnon && (
-            <div className="flex items-center gap-1.5">
-              {[
-                { n: 1, label: "Choose role" },
-                { n: 2, label: "Accept terms" },
-              ].map(({ n, label }, idx) => {
-                const done = n < step;
-                const active = n === step;
-                return (
-                  <div key={n} className="flex items-center gap-1.5">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors
-                        ${done ? "bg-primary text-primary-foreground" : active ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}
-                    >
-                      {done ? <Check className="w-3.5 h-3.5" /> : n}
-                    </div>
-                    <span className={`text-xs hidden sm:inline ${active ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {label}
-                    </span>
-                    {idx < 1 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {isAnon && (
-            <span className="text-xs text-muted-foreground">Step 1 of 1 - Terms & Conditions</span>
-          )}
+          {/* Step indicator - hidden since role selection is deactivated */}
+          <span className="text-xs text-muted-foreground">Terms & Conditions</span>
         </div>
       </header>
 
       <div className="flex-1 max-w-3xl w-full mx-auto px-5 py-10">
 
-        {/* ══ STEP 1: Role selection (staff only) ══ */}
-        {step === 1 && !isAnon && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-3xl font-black text-foreground mb-2">Welcome to WHRD Hub</h1>
-              <p className="text-muted-foreground">
-                Choose the role that describes your work on this platform to set up your account correctly.
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-4 mb-8">
-              {ROLES.map(role => {
-                const isSelected = selectedRole === role.id;
-                return (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => setSelectedRole(role.id)}
-                    className={`relative text-left p-6 rounded-2xl border-2 transition-all bg-white
-                      ${isSelected ? role.selectedBorder : "border-border hover:shadow-sm"}`}
-                  >
-                    {isSelected && (
-                      <div className={`absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center ${role.check}`}>
-                        <Check className="w-3.5 h-3.5 text-white" />
-                      </div>
-                    )}
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${role.iconBg}`}>
-                      <role.Icon className="w-6 h-6" />
-                    </div>
-                    <p className="font-black text-lg text-foreground mb-0.5">{role.label}</p>
-                    <p className="text-xs text-muted-foreground font-medium mb-3">{role.tagline}</p>
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">{role.description}</p>
-                    <ul className="space-y-1.5">
-                      {role.capabilities.map(cap => (
-                        <li key={cap} className="flex items-start gap-2 text-xs text-muted-foreground">
-                          <Check className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" />
-                          {cap}
-                        </li>
-                      ))}
-                    </ul>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-end">
-              <Button onClick={() => setStep(2)} disabled={!selectedRole} className="gap-2">
-                Continue <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </>
+        {/* ══ STEP 1: Role selection - DEACTIVATED FOR TESTING ══ */}
+        {false && (
+          <></>
         )}
 
         {/* ══ STEP 2: Terms (all users) ══ */}
-        {(step === 2 || isAnon) && (
+        {step === 2 && (
           <>
-            {!isAnon && (
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" /> Back
-              </button>
-            )}
-
             <div className="mb-8">
-              <h1 className="text-3xl font-black text-foreground mb-2">
-                {isAnon ? "Before you continue" : "Terms & Conditions"}
-              </h1>
+              <h1 className="text-3xl font-black text-foreground mb-2">Terms & Conditions</h1>
               <p className="text-muted-foreground">
-                {isAnon
-                  ? "Please read and accept our terms before accessing your reports and dashboard."
-                  : <>Please read all sections carefully before proceeding as a{" "}
-                      <strong>{selectedRole === "admin" ? "platform Admin" : "Human Rights Defender"}</strong>.</>
-                }
+                Please read and accept our terms before accessing your reports and dashboard.
               </p>
             </div>
 
@@ -286,10 +195,7 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
                   className="mt-0.5 w-4 h-4 accent-primary shrink-0"
                 />
                 <span className="text-sm text-foreground leading-relaxed">
-                  {isAnon
-                    ? "I have read and I accept the WHRD Hub Terms & Conditions. I understand my reports are handled confidentially and I may request data deletion at any time."
-                    : "I have read and I accept the WHRD Hub Terms & Conditions. I understand my responsibilities as a platform staff member and commit to upholding reporter confidentiality, trauma-informed practice, and platform safety."
-                  }
+                  I have read and I accept the WHRD Hub Terms & Conditions. I understand my reports are handled confidentially and I may request data deletion at any time.
                 </span>
               </label>
             </div>
@@ -305,7 +211,7 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
                 disabled={!accepted || isPending}
                 className="gap-2"
               >
-                {isPending ? "Setting up your account…" : isAnon ? "Continue to Dashboard" : "Complete Setup"}
+                {isPending ? "Setting up your account…" : "Continue to Dashboard"}
                 {!isPending && <ArrowRight className="w-4 h-4" />}
               </Button>
             </div>
