@@ -23,7 +23,7 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       {/* ── Nav ── */}
       <nav aria-label="Main navigation" className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 py-3.5 flex justify-between items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex justify-between items-center gap-2">
           <Link href="/" className="flex items-center gap-3" aria-label="WHRD Hub home">
             <img src="/main-logo.png" alt="WHRD Hub" className="h-10 w-auto object-contain" />
           </Link>
@@ -57,24 +57,24 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       {/* ── Hero ── */}
       <main id="main-content" tabIndex={-1}>
-      <section className="pt-32 pb-24 px-6 bg-primary text-white" aria-labelledby="hero-heading">
+      <section className="pt-20 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 bg-primary text-white" aria-labelledby="hero-heading">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider mb-8">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-5 sm:mb-8">
             <Lock className="w-3 h-3" />
             {l.hero.badge}
           </div>
-          <h1 id="hero-heading" className="text-4xl sm:text-5xl md:text-[3.25rem] font-black leading-[1.12] mb-5">
+          <h1 id="hero-heading" className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black leading-[1.12] mb-3 sm:mb-5">
             {l.hero.title}
             <br />
             <span className="text-white/75 font-light">{l.hero.titleLight}</span>
           </h1>
-          <p className="text-base md:text-lg text-white/70 max-w-xl mx-auto mb-10 leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-white/70 max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed px-2">
             {l.hero.subtitle}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center px-2">
             <Link
               href="/report"
-              className="group inline-flex items-center justify-center gap-2 bg-white text-primary px-7 py-3.5 rounded-lg font-bold text-sm hover:bg-white/95 transition-colors"
+              className="group inline-flex items-center justify-center gap-2 bg-white text-primary px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-lg font-bold text-sm hover:bg-white/95 transition-colors w-full sm:w-auto"
             >
               {l.hero.ctaMakeReport}
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -98,7 +98,7 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       </section>
 
       {/* ── Safety banner ── */}
-      <div role="note" aria-label="Safety information" className="bg-amber-50 border-b border-amber-200 py-2.5 px-6">
+      <div role="note" aria-label="Safety information" className="bg-amber-50 border-b border-amber-200 py-2 sm:py-2.5 px-4 sm:px-6">
         <p className="text-center text-xs text-amber-800 max-w-3xl mx-auto">
           <span className="font-semibold">{l.safetyBanner.bold}</span>{" "}
           {l.safetyBanner.text}{" "}
@@ -109,27 +109,27 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       </div>
 
       {/* ── How it works ── */}
-      <section id="how-it-works" aria-labelledby="how-it-works-heading" className="py-24 px-6 bg-white">
+      <section id="how-it-works" aria-labelledby="how-it-works-heading" className="py-12 sm:py-24 px-4 sm:px-6 bg-white">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "hsl(27, 87%, 52%)" }}>
+          <div className="text-center mb-10 sm:mb-16">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 sm:mb-3" style={{ color: "hsl(27, 87%, 52%)" }}>
               {l.howItWorks.label}
             </p>
-            <h2 id="how-it-works-heading" className="text-2xl sm:text-3xl font-black text-foreground mb-3">{l.howItWorks.title}</h2>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">{l.howItWorks.subtitle}</p>
+            <h2 id="how-it-works-heading" className="text-xl sm:text-2xl md:text-3xl font-black text-foreground mb-2 sm:mb-3">{l.howItWorks.title}</h2>
+            <p className="text-muted-foreground text-xs sm:text-sm max-w-md mx-auto leading-relaxed">{l.howItWorks.subtitle}</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5">
             {l.howItWorks.steps.map((step, i) => {
               const num = String(i + 1).padStart(2, "0");
               const Icon = [FileText, Lock, Shield][i];
               return (
-                <div key={num} className="relative p-7 rounded-2xl border border-border bg-background hover:shadow-md transition-shadow">
-                  <span className="absolute top-5 right-6 text-5xl font-black text-primary/[0.07] select-none leading-none">{num}</span>
-                  <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center mb-5" aria-hidden="true">
-                    <Icon className="w-5 h-5" />
+                <div key={num} className="relative p-4 sm:p-7 rounded-xl sm:rounded-2xl border border-border bg-background hover:shadow-md transition-shadow">
+                  <span className="absolute top-3 sm:top-5 right-4 sm:right-6 text-4xl sm:text-5xl font-black text-primary/[0.07] select-none leading-none">{num}</span>
+                  <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-lg sm:rounded-xl bg-primary text-white flex items-center justify-center mb-3 sm:mb-5" aria-hidden="true">
+                    <Icon className="w-4 sm:w-5 h-4 sm:h-5" />
                   </div>
-                  <h3 className="font-bold text-base text-foreground mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
+                  <h3 className="font-bold text-sm sm:text-base text-foreground mb-1 sm:mb-2">{step.title}</h3>
+                  <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">{step.desc}</p>
                 </div>
               );
             })}
@@ -138,24 +138,24 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       </section>
 
       {/* ── What you can report ── */}
-      <section aria-labelledby="report-types-heading" className="py-24 px-6 bg-muted/30 border-y border-border">
+      <section aria-labelledby="report-types-heading" className="py-12 sm:py-24 px-4 sm:px-6 bg-muted/30 border-y border-border">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "hsl(192, 100%, 38%)" }}>
+          <div className="text-center mb-10 sm:mb-16">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 sm:mb-3" style={{ color: "hsl(192, 100%, 38%)" }}>
               {l.whatYouCanReport.label}
             </p>
-            <h2 id="report-types-heading" className="text-2xl sm:text-3xl font-black text-foreground mb-3">{l.whatYouCanReport.title}</h2>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">{l.whatYouCanReport.subtitle}</p>
+            <h2 id="report-types-heading" className="text-xl sm:text-2xl md:text-3xl font-black text-foreground mb-2 sm:mb-3">{l.whatYouCanReport.title}</h2>
+            <p className="text-muted-foreground text-xs sm:text-sm max-w-md mx-auto leading-relaxed">{l.whatYouCanReport.subtitle}</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
             {l.whatYouCanReport.items.map((item, i) => {
               const Icon = REPORT_ICONS[i % REPORT_ICONS.length];
               return (
-                <div key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-border hover:shadow-sm transition-shadow">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0" aria-hidden="true">
-                    <Icon className="w-4 h-4" />
+                <div key={i} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-2xl bg-white border border-border hover:shadow-sm transition-shadow">
+                  <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-lg sm:rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0" aria-hidden="true">
+                    <Icon className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                   </div>
-                  <span className="text-sm font-medium leading-snug">{item}</span>
+                  <span className="text-xs sm:text-sm font-medium leading-snug">{item}</span>
                 </div>
               );
             })}
@@ -164,15 +164,15 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       </section>
 
       {/* ── Stats ── */}
-      <section aria-label="Platform statistics" className="py-24 px-6 bg-white">
+      <section aria-label="Platform statistics" className="py-12 sm:py-24 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border rounded-2xl overflow-hidden border border-border">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border rounded-lg sm:rounded-2xl overflow-hidden border border-border">
             {l.stats.map((item, i) => {
               const accent = ["hsl(270, 52%, 37%)", "hsl(27, 87%, 52%)", "hsl(192, 100%, 38%)"][i];
               return (
-                <div key={i} className="bg-white px-8 py-10 text-center">
-                  <p className="text-3xl font-black mb-1" style={{ color: accent }}>{item.value}</p>
-                  <p className="font-bold text-foreground text-sm mb-1">{item.label}</p>
+                <div key={i} className="bg-white px-4 sm:px-8 py-6 sm:py-10 text-center">
+                  <p className="text-2xl sm:text-3xl font-black mb-1" style={{ color: accent }}>{item.value}</p>
+                  <p className="font-bold text-foreground text-xs sm:text-sm mb-1">{item.label}</p>
                   <p className="text-xs text-muted-foreground">{item.desc}</p>
                 </div>
               );
@@ -182,10 +182,10 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       </section>
 
       {/* ── CTA ── */}
-      <section aria-labelledby="cta-heading" className="py-24 px-6 bg-primary text-white">
+      <section aria-labelledby="cta-heading" className="py-12 sm:py-24 px-4 sm:px-6 bg-primary text-white">
         <div className="max-w-xl mx-auto text-center">
-          <h2 id="cta-heading" className="text-2xl sm:text-3xl font-black mb-4">{l.cta.title}</h2>
-          <p className="text-white/70 mb-8 text-base leading-relaxed">{l.cta.subtitle}</p>
+          <h2 id="cta-heading" className="text-xl sm:text-2xl md:text-3xl font-black mb-3 sm:mb-4">{l.cta.title}</h2>
+          <p className="text-white/70 mb-6 sm:mb-8 text-sm sm:text-base leading-relaxed">{l.cta.subtitle}</p>
           <Link
             href="/report"
             className="group inline-flex items-center gap-2 bg-white text-primary px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-white/95 transition-colors"
@@ -197,8 +197,8 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       </section>
 
       {/* ── Emergency strip ── */}
-      <div role="complementary" aria-label="Emergency contacts" className="bg-red-50 border-t border-red-200 py-3 px-6">
-        <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-5 text-sm">
+      <div role="complementary" aria-label="Emergency contacts" className="bg-red-50 border-t border-red-200 py-2 sm:py-3 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-xs sm:text-sm">
           <span className="text-red-700 font-semibold flex items-center gap-1.5">
             <Phone className="w-3.5 h-3.5" aria-hidden="true" />{l.emergency.title}
           </span>
@@ -211,8 +211,8 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       </main>
 
       {/* ── Footer ── */}
-      <footer aria-label="Site footer" className="border-t border-border py-10 px-6 bg-white">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <footer aria-label="Site footer" className="border-t border-border py-6 sm:py-10 px-4 sm:px-6 bg-white">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
             <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
           </div>

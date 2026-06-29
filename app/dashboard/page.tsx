@@ -81,28 +81,28 @@ async function DashboardContent() {
     <>
       {/* Header */}
       <header className="bg-white border-b border-border sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-8 w-auto object-contain" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-7 sm:h-8 w-auto object-contain" />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             {profile?.user_type === "admin" && (
-              <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20">
+              <span className="hidden md:inline-flex items-center gap-1 text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20">
                 <Shield className="w-3 h-3" /> Admin
               </span>
             )}
             <LangSwitcher variant="compact" />
             <Link href="/profile"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted">
+              className="hidden xs:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 sm:px-3 py-1.5 rounded-lg hover:bg-muted">
               <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{username}</span>
+              <span className="hidden sm:inline text-xs sm:text-sm">{username}</span>
             </Link>
             <LogoutButton />
           </div>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-5 py-10 space-y-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-5 py-6 sm:py-10 space-y-6 sm:space-y-8">
 
         {/* Greeting */}
         <div className="flex items-start justify-between gap-4">
@@ -121,7 +121,7 @@ async function DashboardContent() {
         )}
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {stats.map(({ label, value, icon: Icon, color }) => (
             <div key={label} className="bg-white rounded-2xl border border-border p-5 flex items-center gap-4 shadow-sm">
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${color}`}>

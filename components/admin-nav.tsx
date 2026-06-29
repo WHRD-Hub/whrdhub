@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Briefcase, BarChart2, Map, Shield, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Briefcase, BarChart2, Map, Shield, LogOut, Menu } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { LangSwitcher } from "@/components/lang-switcher";
+import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navLinks = [
   { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard },
@@ -18,6 +21,8 @@ const navLinks = [
 export function AdminNav({ username, userType }: { username: string; userType: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
 
   const logout = async () => {
     const supabase = createClient();
@@ -25,8 +30,8 @@ export function AdminNav({ username, userType }: { username: string; userType: s
     router.push("/");
   };
 
-  return (
-    <aside className="w-56 shrink-0 bg-primary text-primary-foreground h-screen flex flex-col">
+  const NavContent = () => (
+    <>
       <div className="p-5 border-b border-white/10">
         <img src="/main-logo.png" alt="WHRD Hub" className="h-8 w-auto object-contain brightness-0 invert mb-2" />
         <div className="flex items-center gap-1.5">
@@ -42,6 +47,7 @@ export function AdminNav({ username, userType }: { username: string; userType: s
             <Link
               key={href}
               href={href}
+              onClick={() => setOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-white/15 text-white"
@@ -67,7 +73,6 @@ export function AdminNav({ username, userType }: { username: string; userType: s
           </div>
         </div>
 
-        {/* Language switcher */}
         <LangSwitcher variant="compact" className="w-full [&>button]:w-full [&>button]:justify-start [&>button]:bg-white/10 [&>button]:border-white/20 [&>button]:text-white [&>button]:hover:bg-white/20" />
 
         <button
@@ -78,6 +83,29 @@ export function AdminNav({ username, userType }: { username: string; userType: s
           Sign out
         </button>
       </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <button className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-primary text-white hover:bg-primary/90 lg:hidden">
+            <Menu className="w-6 h-6" />
+          </button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-56 p-0 bg-primary text-primary-foreground border-0">
+          <div className="flex flex-col h-full bg-primary">
+            <NavContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <aside className="hidden lg:flex w-56 shrink-0 bg-primary text-primary-foreground h-screen flex-col">
+      <NavContent />
     </aside>
   );
 }

@@ -26,13 +26,13 @@ export default function ReportPage() {
 
       {/* Header */}
       <header className="bg-primary text-primary-foreground">
-        <div className="max-w-3xl mx-auto px-5 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
+        <div className="max-w-3xl mx-auto px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-white/70 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            WHRD Hub
+            <span className="hidden sm:inline">WHRD Hub</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-white/80">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-white/80">
               <Lock className="w-4 h-4" />
               <span>Secure and confidential</span>
             </div>
@@ -51,13 +51,13 @@ export default function ReportPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-3xl mx-auto px-5 py-10">
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-xs font-semibold mb-4">
-            <Shield className="w-3.5 h-3.5" />
+      <div className="max-w-3xl mx-auto px-4 sm:px-5 py-6 sm:py-10">
+        <div className="mb-6 sm:mb-8 text-center">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-3 sm:px-4 py-1.5 text-xs font-semibold mb-3 sm:mb-4">
+            <Shield className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             Your report is encrypted
           </div>
-          <h1 className="text-3xl font-black text-primary mb-2">Report safely</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-primary mb-2">Report safely</h1>
           <p className="text-muted-foreground text-sm max-w-xl mx-auto leading-relaxed">
             You are not alone. Share only what feels comfortable. Your IP address is not recorded.
           </p>

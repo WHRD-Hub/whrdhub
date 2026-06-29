@@ -61,7 +61,7 @@ function Card({ title, subtitle, children }: {
   title?: string; subtitle?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm p-6 md:p-8 space-y-5">
+    <div className="bg-white rounded-xl sm:rounded-2xl border border-border shadow-sm p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-5">
       {title && (
         <div className="space-y-0.5">
           <h2 className="font-bold text-base text-foreground">{title}</h2>
@@ -331,7 +331,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   const SUPPORT_OPTIONS   = Object.entries(tr.options.support).map(([value, label]) => ({ value, label }));
 
   return (
-    <div className="space-y-5 max-w-2xl mx-auto">
+    <div className="space-y-4 sm:space-y-5 w-full max-w-2xl mx-auto">
 
       {/* Screen-reader live region — announces validation errors on submit */}
       <div

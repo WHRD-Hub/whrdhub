@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex h-screen overflow-hidden bg-muted/20">
       <AdminNav username={profile.username || "Admin"} userType={profile.user_type} />
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">{children}</main>
     </div>
   );
 }
