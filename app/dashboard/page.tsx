@@ -83,7 +83,7 @@ async function DashboardContent() {
       <header className="bg-white border-b border-border sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-3">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-7 sm:h-8 w-auto object-contain" />
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-8 sm:h-9 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-1 sm:gap-3">
             {profile?.user_type === "admin" && (

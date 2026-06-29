@@ -82,7 +82,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     <div className={cn("flex flex-col gap-4 sm:gap-6", className)} {...props}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-3 sm:gap-0">
         <div className="flex items-center gap-2 sm:gap-3">
-          <img src="/main-logo.png" alt="WHRD Hub" className="h-10 sm:h-12 w-auto object-contain" />
+          <img src="/main-logo.png" alt="WHRD Hub" className="h-11 sm:h-14 w-auto object-contain" />
           <p className="text-xs text-muted-foreground hidden sm:block">Protect · Heal · Nurture</p>
         </div>
         <LangSwitcher variant="compact" />

@@ -135,7 +135,7 @@ function toggle(arr: string[], val: string, set: (v: string[]) => void) {
 // ─── data ─────────────────────────────────────────────────────────────────────
 const PLATFORMS = [
   "Facebook", "Twitter / X", "Instagram", "WhatsApp", "TikTok",
-  "YouTube", "Telegram", "LinkedIn", "Snapchat", "Email", "SMS", "Other",
+  "YouTube", "Telegram", "LinkedIn", "Snapchat", "Signal", "Email", "SMS", "Other",
 ];
 
 const COUNTIES = [

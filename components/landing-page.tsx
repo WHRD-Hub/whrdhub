@@ -25,7 +25,7 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       <nav aria-label="Main navigation" className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex justify-between items-center gap-2">
           <Link href="/" className="flex items-center gap-3" aria-label="WHRD Hub home">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-10 w-auto object-contain" />
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-11 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-2">
             <LangSwitcher variant="compact" />
