@@ -212,13 +212,22 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       {/* ── Footer ── */}
       <footer aria-label="Site footer" className="border-t border-border py-6 sm:py-10 px-4 sm:px-6 bg-white">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <LangSwitcher variant="full" />
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+                <span className="opacity-30">•</span>
+                <Link href="/terms-of-use" className="hover:text-primary transition-colors">Terms of Use</Link>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <LangSwitcher variant="full" />
-            <p className="text-[11px] text-muted-foreground font-medium text-center md:text-right">
+          <div className="text-center text-[11px] text-muted-foreground font-medium border-t border-border pt-4">
+            <p>
               {l.footer.tagline}
               <span className="mx-2 opacity-30">|</span>
               {l.footer.legal}

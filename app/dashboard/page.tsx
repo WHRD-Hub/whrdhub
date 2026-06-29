@@ -248,6 +248,22 @@ async function DashboardContent() {
             ))}
           </div>
         </div>
+
+        {/* Footer with legal links */}
+        <div className="border-t border-border pt-6 mt-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+            <p>© 2025 WHRD Hub. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <Link href="/privacy-policy" className="hover:text-primary transition-colors">
+                Privacy Policy
+              </Link>
+              <span className="opacity-30">•</span>
+              <Link href="/terms-of-use" className="hover:text-primary transition-colors">
+                Terms of Use
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
