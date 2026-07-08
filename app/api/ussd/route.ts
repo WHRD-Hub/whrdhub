@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Africa's Talking USSD webhook handler
 // Shared USSD code - set up via Africa's Talking dashboard
@@ -64,20 +64,42 @@ export async function POST(req: NextRequest) {
         const urgIdx = parseInt(inputs[2]);
         const countyIdx = parseInt(inputs[3]);
 
-        const supabase = await createClient();
+        // A USSD webhook has no browser session, so the cookie client's
+        // auth.uid() is null and RLS blocks the insert. Use the service-role
+        // admin client (bypasses RLS) exactly like app/actions/submit-report.ts.
+        const admin = createAdminClient();
 
-        // Create anonymous USSD report
+        // Create a pre-confirmed anonymous account for this reporter.
         const username = `ussd-${Math.random().toString(36).slice(2, 8)}`;
-        const virtualEmail = `${username}@ussd.whrdhub.org`;
+        const virtualEmail = `${username}@whrdhub.local`;
         const password = Math.random().toString(36).slice(2, 14);
 
-        const { data: auth } = await supabase.auth.signUp({
-          email: virtualEmail, password,
-          options: { data: { username, is_anonymous: true, user_type: "reporter" } },
+        const { data: signupData, error: signupError } = await admin.auth.admin.createUser({
+          email: virtualEmail,
+          password,
+          email_confirm: true,
+          user_metadata: { username, is_anonymous: true, user_type: "reporter" },
         });
 
-        const userId = auth.user?.id;
-        const { data: report } = await supabase.from("reports").insert({
+        if (signupError || !signupData.user) {
+          console.error("USSD account creation error:", signupError);
+          return new NextResponse(
+            `END An error occurred saving your report. Please call 1195 for support.`,
+            { headers: { "Content-Type": "text/plain" } },
+          );
+        }
+        const userId = signupData.user.id;
+
+        // The profile trigger fires asynchronously; upsert to guarantee the row.
+        await admin.from("profiles").upsert({
+          id: userId,
+          username,
+          is_anonymous: true,
+          user_type: "reporter",
+          email: virtualEmail,
+        }, { onConflict: "id", ignoreDuplicates: false });
+
+        const { data: report, error: reportError } = await admin.from("reports").insert({
           user_id: userId,
           incident_types: [INCIDENT_TYPES[typeIdx] || "other"],
           description: `USSD report via shared code from ${phoneNumber.replace(/\d(?=\d{4})/g, "*")}`,
@@ -93,15 +115,24 @@ export async function POST(req: NextRequest) {
           channel: "ussd",
         }).select("id").single();
 
-        // Log USSD session
-        if (report?.id) {
-          await supabase.from("ussd_sessions").insert({
-            session_id: sessionId, phone_number: phoneNumber.replace(/\d(?=\d{4})/g, "*"),
-            text_input: text, current_step: "completed", report_id: report.id,
-          });
+        if (reportError || !report?.id) {
+          console.error("USSD report insert error:", reportError);
+          return new NextResponse(
+            `END An error occurred saving your report. Please call 1195 for support.`,
+            { headers: { "Content-Type": "text/plain" } },
+          );
         }
 
-        const ref = report?.id?.slice(0, 8).toUpperCase() || "ERR";
+        // Log the USSD session for the admin audit trail.
+        await admin.from("ussd_sessions").insert({
+          session_id: sessionId,
+          phone_number: phoneNumber.replace(/\d(?=\d{4})/g, "*"),
+          text_input: text,
+          current_step: "completed",
+          report_id: report.id,
+        });
+
+        const ref = report.id.slice(0, 8).toUpperCase();
         response = MENU.submitted(ref);
       } else {
         response = MENU.cancelled;
