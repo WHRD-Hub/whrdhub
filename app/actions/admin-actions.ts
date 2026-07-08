@@ -18,7 +18,7 @@ export async function factCheckReport(
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase.from("reports").update({
-    verification_status: data.verification_status,
+    verification_status: data.verification_status as "pending" | "verified" | "unverified" | "needs_more_info",
     verification_notes: data.verification_notes,
     verified_by: user.id,
     verified_at: new Date().toISOString(),
@@ -49,7 +49,7 @@ export async function verifyReport(reportId: string, status: string, notes: stri
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase.from("reports").update({
-    verification_status: status,
+    verification_status: status as "pending" | "verified" | "unverified" | "needs_more_info",
     verification_notes: notes,
     verified_by: user.id,
     verified_at: new Date().toISOString(),
@@ -74,7 +74,10 @@ export async function updateReportStatus(reportId: string, status: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { error } = await supabase.from("reports").update({ status, assigned_to: user.id }).eq("id", reportId);
+  const { error } = await supabase.from("reports").update({
+    status: status as "submitted" | "under_review" | "referred" | "closed" | "flagged",
+    assigned_to: user.id,
+  }).eq("id", reportId);
   if (error) return { error: error.message };
 
   await supabase.from("report_audit_log").insert({
@@ -117,7 +120,12 @@ export async function createService(data: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { error } = await supabase.from("services").insert({ ...data, created_by: user.id, is_active: true });
+  const { error } = await supabase.from("services").insert({
+    ...data,
+    category: data.category as "legal" | "medical" | "psychosocial" | "shelter" | "digital_security" | "financial" | "referral" | "other",
+    created_by: user.id,
+    is_active: true,
+  });
   if (error) return { error: error.message };
   revalidatePath("/admin/services");
   return { success: true };

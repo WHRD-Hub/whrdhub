@@ -74,7 +74,7 @@ async function DashboardContent() {
   const stats = [
     { label: "Reports submitted", value: reports?.length ?? 0,                                                              icon: FileText,      color: "text-primary bg-primary/10" },
     { label: "Under review",      value: reports?.filter(r => r.status === "under_review").length ?? 0,                    icon: Clock,         color: "text-amber-600 bg-amber-100" },
-    { label: "Resolved",          value: reports?.filter(r => ["referred","closed"].includes(r.status)).length ?? 0,       icon: CheckCircle,   color: "text-green-600 bg-green-100" },
+    { label: "Resolved",          value: reports?.filter(r => ["referred","closed"].includes(r.status ?? "")).length ?? 0,  icon: CheckCircle,   color: "text-green-600 bg-green-100" },
   ];
 
   return (
@@ -186,8 +186,8 @@ async function DashboardContent() {
           ) : (
             <div className="space-y-3">
               {reports.map(r => {
-                const sm = STATUS_META[r.status] || STATUS_META.submitted;
-                const vm = VERIF_META[r.verification_status] || VERIF_META.pending;
+                const sm = (r.status && STATUS_META[r.status]) || STATUS_META.submitted;
+                const vm = (r.verification_status && VERIF_META[r.verification_status]) || VERIF_META.pending;
                 const services = assignedServices?.filter(a => a.report_id === r.id) ?? [];
                 return (
                   <Link key={r.id} href={`/dashboard/reports/${r.id}`} className="block bg-white rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/30 transition-all space-y-3">
@@ -203,7 +203,7 @@ async function DashboardContent() {
                         </div>
                         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                           {r.county && <span>{r.county}</span>}
-                          <span>{new Date(r.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
+                          <span>{new Date(r.created_at!).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
                           {r.urgency === "immediate" && (
                             <span className="text-destructive font-semibold flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3" />Immediate

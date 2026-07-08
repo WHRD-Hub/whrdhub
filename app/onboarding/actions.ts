@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import { redirect } from "next/navigation";
 
 // All new users are reporters - T&C only, no role selection
@@ -9,7 +10,7 @@ export async function completeOnboarding(role: "admin" | "defender" | "reporter"
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) redirect("/auth/login");
 
-  const update: Record<string, unknown> = {
+  const update: Database["public"]["Tables"]["profiles"]["Update"] = {
     onboarding_completed: true,
     accepted_terms_at: new Date().toISOString(),
   };

@@ -58,7 +58,7 @@ async function ReportDetail({ id }: { id: string }) {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const vm = VERIFICATION_META[report.verification_status] || VERIFICATION_META.pending;
+  const vm = (report.verification_status && VERIFICATION_META[report.verification_status]) || VERIFICATION_META.pending;
   const profile = profileData as { username?: string; is_anonymous?: boolean; email?: string; user_type?: string } | null;
 
   // Log the view
@@ -156,7 +156,7 @@ async function ReportDetail({ id }: { id: string }) {
             </div>
 
             <Field label="HOW - Method / Description" value={report.how_description} />
-            {report.evidence_types?.length > 0 && (
+            {(report.evidence_types?.length ?? 0) > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Evidence available</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -187,7 +187,7 @@ async function ReportDetail({ id }: { id: string }) {
           {/* Fact-check form */}
           <FactCheckForm
             reportId={id}
-            currentStatus={report.verification_status}
+            currentStatus={report.verification_status ?? "pending"}
             currentNotes={report.verification_notes}
             currentIncidentTypes={report.incident_types as string[]}
             currentAttackNature={report.attack_nature}
@@ -212,7 +212,7 @@ async function ReportDetail({ id }: { id: string }) {
               <Field label="Reporting for" value={report.reporting_for?.replace(/_/g, " ")} />
               <Field label="Channel" value={report.channel} />
               <p className="text-xs text-muted-foreground">
-                Submitted {new Date(report.created_at).toLocaleString("en-KE")}
+                Submitted {new Date(report.created_at!).toLocaleString("en-KE")}
               </p>
             </div>
           </div>
@@ -264,7 +264,7 @@ async function ReportDetail({ id }: { id: string }) {
                       <span className="text-muted-foreground">
                         <span className="font-medium text-foreground">{p?.username || "defender"}</span> - {log.action}
                       </span>
-                      <span className="text-muted-foreground shrink-0">{new Date(log.created_at).toLocaleDateString()}</span>
+                      <span className="text-muted-foreground shrink-0">{new Date(log.created_at!).toLocaleDateString()}</span>
                     </div>
                   );
                 })}

@@ -32,9 +32,9 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
     .range(from, from + PAGE_SIZE - 1);
 
   if (county) query = query.eq("county", county);
-  if (urgency) query = query.eq("urgency", urgency);
-  if (verif) query = query.eq("verification_status", verif);
-  if (reporter) query = query.eq("reporter_type", reporter);
+  if (urgency) query = query.eq("urgency", urgency as "immediate" | "within_week" | "no_rush");
+  if (verif) query = query.eq("verification_status", verif as "pending" | "verified" | "unverified" | "needs_more_info");
+  if (reporter) query = query.eq("reporter_type", reporter as "anonymous" | "authenticated");
   if (selfOnly && currentUserId) query = query.eq("user_id", currentUserId);
 
   const { data: reports, count } = await query;
@@ -76,7 +76,7 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
             ) : reports.map(r => (
               <TableRow key={r.id}>
                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                  {new Date(r.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                  {new Date(r.created_at!).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
@@ -89,17 +89,17 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
                 <TableCell className="text-sm">{r.county || "-"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{r.perpetrator_type?.replace(/_/g, " ") || "-"}</TableCell>
                 <TableCell>
-                  <Badge variant={URGENCY_BADGE[r.urgency] || "secondary"}>
+                  <Badge variant={(r.urgency && URGENCY_BADGE[r.urgency]) || "secondary"}>
                     {r.urgency?.replace(/_/g, " ")}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={VERIFICATION_BADGE[r.verification_status] || "secondary"}>
+                  <Badge variant={(r.verification_status && VERIFICATION_BADGE[r.verification_status]) || "secondary"}>
                     {r.verification_status?.replace(/_/g, " ")}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={STATUS_BADGE[r.status] || "secondary"}>
+                  <Badge variant={(r.status && STATUS_BADGE[r.status]) || "secondary"}>
                     {r.status?.replace(/_/g, " ")}
                   </Badge>
                 </TableCell>

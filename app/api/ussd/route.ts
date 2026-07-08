@@ -19,7 +19,7 @@ const MENU = {
 
 const INCIDENT_TYPES = ["", "physical_violence", "online_harassment", "sexual_violence", "workplace_abuse", "other"];
 const COUNTIES = ["", "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Other"];
-const URGENCY_LEVELS = ["", "immediate", "within_week", "no_rush"];
+const URGENCY_LEVELS = ["", "immediate", "within_week", "no_rush"] as const;
 
 export async function POST(req: NextRequest) {
   const body = await req.text();

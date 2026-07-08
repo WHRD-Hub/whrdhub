@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 
 interface Report {
   id: string;
-  latitude: number;
-  longitude: number;
-  incident_types: string[];
-  county?: string;
-  urgency: string;
-  reporter_type: string;
-  verification_status: string;
-  created_at: string;
+  latitude: number | null;
+  longitude: number | null;
+  incident_types: string[] | null;
+  county?: string | null;
+  urgency: string | null;
+  reporter_type: string | null;
+  verification_status: string | null;
+  created_at: string | null;
 }
 
 const URGENCY_COLORS: Record<string, string> = {
@@ -54,7 +54,7 @@ export function MapView({ reports }: { reports: Report[] }) {
       }).addTo(map);
 
       const markers = reports.map(r => {
-        const color = URGENCY_COLORS[r.urgency] || "#6b21a8";
+        const color = (r.urgency && URGENCY_COLORS[r.urgency]) || "#6b21a8";
         const isAnon = r.reporter_type === "anonymous";
 
         const icon = L.divIcon({
@@ -64,13 +64,13 @@ export function MapView({ reports }: { reports: Report[] }) {
           iconAnchor: [7, 7],
         });
 
-        const marker = L.marker([r.latitude, r.longitude], { icon }).addTo(map);
+        const marker = L.marker([r.latitude!, r.longitude!], { icon }).addTo(map);
         marker.bindPopup(`
           <div style="font-family:sans-serif;font-size:12px;min-width:200px">
             <p style="font-weight:700;margin:0 0 4px;font-size:13px">${(r.incident_types || []).map((t: string) => t.replace(/_/g, " ")).join(", ") || "Incident"}</p>
             <p style="color:#666;margin:0 0 2px"><strong>${r.county || "Unknown"}</strong></p>
             <p style="margin:0 0 2px">Urgency: <span style="color:${color};font-weight:600">${r.urgency?.replace(/_/g, " ")}</span></p>
-            <p style="margin:0 0 2px">${r.reporter_type} · ${new Date(r.created_at).toLocaleDateString()}</p>
+            <p style="margin:0 0 2px">${r.reporter_type} · ${new Date(r.created_at!).toLocaleDateString()}</p>
             <p style="margin:4px 0 0"><a href="/admin/reports/${r.id}" style="color:violet;font-weight:600;text-decoration:underline">Fact-check →</a></p>
           </div>
         `);
@@ -94,7 +94,7 @@ export function MapView({ reports }: { reports: Report[] }) {
   const handleSelect = (r: Report) => {
     setSelectedId(r.id);
     const map = mapInstanceRef.current;
-    if (map) map.flyTo([r.latitude, r.longitude], 10, { duration: 0.8 });
+    if (map) map.flyTo([r.latitude!, r.longitude!], 10, { duration: 0.8 });
   };
 
   const geotagged = reports.filter(r => r.latitude && r.longitude);
@@ -123,17 +123,17 @@ export function MapView({ reports }: { reports: Report[] }) {
                   </span>
                   <div
                     className="w-2.5 h-2.5 rounded-full border border-white shrink-0 mt-0.5"
-                    style={{ background: URGENCY_COLORS[r.urgency] || "#6b21a8" }}
+                    style={{ background: (r.urgency && URGENCY_COLORS[r.urgency]) || "#6b21a8" }}
                   />
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <MapPin className="w-3 h-3" />
                   <span>{r.county || "Unknown county"}</span>
                   <span>·</span>
-                  <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                  <span>{new Date(r.created_at!).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <Badge variant={URGENCY_COLORS[r.urgency] === "#ef4444" ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0">
+                  <Badge variant={(r.urgency && URGENCY_COLORS[r.urgency]) === "#ef4444" ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0">
                     {r.urgency?.replace(/_/g, " ")}
                   </Badge>
                   <Link

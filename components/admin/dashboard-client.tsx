@@ -10,19 +10,19 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 
-interface Report {
+export interface Report {
   id: string;
   incident_types: string[];
   status: string;
   urgency: string;
   verification_status: string;
   reporter_type: string;
-  county?: string;
+  county?: string | null;
   created_at: string;
-  latitude?: number;
-  longitude?: number;
-  description?: string;
-  perpetrator_type?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  description?: string | null;
+  perpetrator_type?: string | null;
 }
 
 const PURPLE = "hsl(271, 76%, 31%)";

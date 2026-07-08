@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { AdminDashboardClient } from "@/components/admin/dashboard-client";
+import { AdminDashboardClient, type Report } from "@/components/admin/dashboard-client";
 
 async function AdminDashboardData() {
   const supabase = await createClient();
@@ -9,7 +9,7 @@ async function AdminDashboardData() {
     .from("reports")
     .select("id, incident_types, status, urgency, verification_status, reporter_type, county, created_at, latitude, longitude, description, perpetrator_type");
 
-  return <AdminDashboardClient reports={reports ?? []} />;
+  return <AdminDashboardClient reports={(reports ?? []) as Report[]} />;
 }
 
 export default function AdminPage() {

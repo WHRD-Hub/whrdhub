@@ -35,8 +35,8 @@ export default async function ReportDetailPage({
     .from("reports")
     .select(
       `*,
-       assigned_services (
-         id, service_id, assigned_at,
+       report_services (
+         id, service_id, assigned_at, note,
          services (id, name, description)
        )`
     )
@@ -46,8 +46,8 @@ export default async function ReportDetailPage({
 
   if (reportError || !report) return notFound();
 
-  const sm = STATUS_META[report.status] || STATUS_META.submitted;
-  const vm = VERIF_META[report.verification_status] || VERIF_META.pending;
+  const sm = (report.status && STATUS_META[report.status]) || STATUS_META.submitted;
+  const vm = (report.verification_status && VERIF_META[report.verification_status]) || VERIF_META.pending;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -91,7 +91,7 @@ export default async function ReportDetailPage({
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Violence Type</dt>
-              <dd className="font-medium capitalize">{report.violence_type?.replace(/_/g, " ")}</dd>
+              <dd className="font-medium capitalize">{(report.incident_types ?? []).map(t => t.replace(/_/g, " ")).join(", ")}</dd>
             </div>
           </dl>
         </div>
@@ -121,14 +121,14 @@ export default async function ReportDetailPage({
                   When It Occurred
                 </p>
                 <p className="font-medium">
-                  {report.occurred_date ? new Date(report.occurred_date).toLocaleDateString() : "Not specified"}
+                  {report.occurred_at ? new Date(report.occurred_at).toLocaleDateString() : "Not specified"}
                 </p>
               </div>
             </div>
-            {report.location_desc && (
+            {report.location_description && (
               <div>
                 <p className="text-muted-foreground mb-1">Location Details</p>
-                <p className="bg-muted/50 rounded-lg p-3">{report.location_desc}</p>
+                <p className="bg-muted/50 rounded-lg p-3">{report.location_description}</p>
               </div>
             )}
             {report.is_ongoing && (
@@ -182,11 +182,11 @@ export default async function ReportDetailPage({
                 </div>
               )}
             </dl>
-            {report.screenshot_urls && report.screenshot_urls.length > 0 && (
+            {report.tfgbv_screenshot_urls && report.tfgbv_screenshot_urls.length > 0 && (
               <div>
-                <p className="text-muted-foreground mb-3">Screenshots ({report.screenshot_urls.length})</p>
+                <p className="text-muted-foreground mb-3">Screenshots ({report.tfgbv_screenshot_urls.length})</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {report.screenshot_urls.map((url: string, i: number) => (
+                  {report.tfgbv_screenshot_urls.map((url: string, i: number) => (
                     <a
                       key={i}
                       href={url}
@@ -225,14 +225,14 @@ export default async function ReportDetailPage({
         )}
 
         {/* Assigned Services */}
-        {report.assigned_services && report.assigned_services.length > 0 && (
+        {report.report_services && report.report_services.length > 0 && (
           <div className="bg-white rounded-2xl border border-border shadow-sm p-6 space-y-4">
             <h2 className="text-lg font-bold">Assigned Services</h2>
             <div className="space-y-3">
-              {report.assigned_services.map((assignment: any) => (
+              {report.report_services.map((assignment: any) => (
                 <div key={assignment.id} className="border border-border rounded-lg p-4">
-                  <h3 className="font-bold mb-1">{assignment.services.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{assignment.services.description}</p>
+                  <h3 className="font-bold mb-1">{assignment.services?.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{assignment.services?.description}</p>
                   <p className="text-xs text-muted-foreground">
                     Assigned on {new Date(assignment.assigned_at).toLocaleDateString()}
                   </p>
@@ -271,7 +271,7 @@ export default async function ReportDetailPage({
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between items-center">
               <dt className="text-muted-foreground">Submitted</dt>
-              <dd className="font-medium">{new Date(report.created_at).toLocaleString()}</dd>
+              <dd className="font-medium">{new Date(report.created_at!).toLocaleString()}</dd>
             </div>
             {report.updated_at && (
               <div className="flex justify-between items-center">

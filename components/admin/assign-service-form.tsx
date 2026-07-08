@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { assignService } from "@/app/actions/admin-actions";
 import { toast } from "sonner";
 
-interface Service { id: string; name: string; category: string; organization?: string }
+interface Service { id: string; name: string; category: string; organization?: string | null }
 
 export function AssignServiceForm({ reportId, services }: { reportId: string; services: Service[] }) {
   const [serviceId, setServiceId] = useState("");

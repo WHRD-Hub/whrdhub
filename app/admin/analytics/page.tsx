@@ -76,7 +76,7 @@ async function AnalyticsContent() {
     months[key] = { anonymous: 0, authenticated: 0 };
   }
   reports?.forEach(r => {
-    const key = new Date(r.created_at).toLocaleString("en", { month: "short", year: "2-digit" });
+    const key = new Date(r.created_at!).toLocaleString("en", { month: "short", year: "2-digit" });
     if (months[key]) months[key][r.reporter_type === "anonymous" ? "anonymous" : "authenticated"]++;
   });
   const monthlyTrend = Object.entries(months).map(([month, v]) => ({ month, ...v }));

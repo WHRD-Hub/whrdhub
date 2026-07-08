@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq("id", user.id)
     .single();
 
-  if (!profile || !["admin", "defender"].includes(profile.user_type)) {
+  if (!profile || !profile.user_type || !["admin", "defender"].includes(profile.user_type)) {
     redirect("/dashboard");
   }
 
