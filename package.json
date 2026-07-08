@@ -4,7 +4,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "types:gen": "npx --yes supabase@latest gen types typescript --project-id iygsugmosdnoowerlyel --schema public > lib/supabase/database.types.ts",
+    "types:gen:local": "npx --yes supabase@latest gen types typescript --local --schema public > lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.0",

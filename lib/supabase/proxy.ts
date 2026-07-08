@@ -58,7 +58,9 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession();
 
-  const publicPaths = ["/", "/report", "/auth", "/map"];
+  // /api/ussd is the Africa's Talking USSD webhook - it arrives with no session
+  // and must never be redirected to the login page.
+  const publicPaths = ["/", "/report", "/auth", "/map", "/api/ussd"];
   const isPublic = publicPaths.some(
     (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(p + "/")
   );
