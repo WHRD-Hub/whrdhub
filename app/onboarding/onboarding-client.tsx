@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import { completeOnboarding } from "./actions";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n/context";
+import { getTerms } from "@/lib/i18n/terms";
+import { LangSwitcher } from "@/components/lang-switcher";
 
 type Role = "admin" | "defender";
 
@@ -52,40 +55,6 @@ const ROLES = [
   },
 ];
 
-/* ─────────────────────────────── terms ── */
-const TERMS = [
-  {
-    title: "Data Privacy & Confidentiality",
-    body: `All reports submitted through WHRD Hub are treated as strictly confidential. We collect only the minimum data required to process each report. Personal information is encrypted at rest and in transit using industry-standard protocols.
-
-Reporter identities are protected at all times. Anonymous accounts cannot be traced back to individuals without user-disclosed information. Platform staff have a duty to maintain confidentiality of all reporter information and case details - disclosure to unauthorised parties is grounds for immediate account suspension.`,
-  },
-  {
-    title: "Acceptable Use Policy",
-    body: `WHRD Hub is intended exclusively for reporting and responding to technology-facilitated gender-based violence (TFGBV) and related human rights violations. You may not use this platform to submit false reports, harass individuals, or engage in any activity that violates applicable laws.
-
-All users must use their access only for legitimate platform purposes. Misuse of reporter data, unauthorised disclosure of case information, or abuse of platform features may result in immediate account suspension and referral to relevant authorities.`,
-  },
-  {
-    title: "Fact-Checking & Verification (Staff)",
-    body: `Staff who perform fact-checking must document evidence and reasoning clearly. Distinguish between confirmed facts and assessments. Be aware that verification decisions have real consequences for reporters and may influence referrals to support services.
-
-Mark reports as "Needs More Info" rather than "Unverified" when evidence is inconclusive. Verification notes are visible to all authorised staff and must be professional, factual, and trauma-informed at all times.`,
-  },
-  {
-    title: "Your Rights as a User",
-    body: `You have the right to access your own account data and request corrections at any time. You have the right to withdraw your consent and delete your account upon request.
-
-You are responsible for maintaining the security of your login credentials and must report any suspected unauthorised access immediately. All use of this platform must comply with applicable data protection laws including Kenya's Data Protection Act 2019.`,
-  },
-  {
-    title: "Platform Safety & Mandatory Escalation",
-    body: `If you encounter or submit a report indicating an immediate risk to life or safety, this will be treated as a priority and escalated immediately. Do not delay action on any report marked "Immediate Urgency."
-
-WHRD Hub operates under a duty of care to all users. Staff must adhere to trauma-informed practices at all times and must not re-traumatise reporters through insensitive communication or unnecessary data requests.`,
-  },
-];
-
 /* ─────────────────────────────── accordion ── */
 function AccordionItem({
   title, body, open, onToggle,
@@ -113,6 +82,8 @@ function AccordionItem({
 
 /* ─────────────────────────────── page ── */
 export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
+  const { language } = useLanguage();
+  const terms = getTerms(language);
   // All users (anonymous and new accounts) go straight to terms - role selection deactivated for testing
   // Everyone becomes a normal user (reporter)
   const [step, setStep] = useState<1 | 2>(2);
@@ -151,8 +122,11 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
             <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
           </div>
 
-          {/* Step indicator - hidden since role selection is deactivated */}
-          <span className="text-xs text-muted-foreground">Terms & Conditions</span>
+          <div className="flex items-center gap-3">
+            {/* Step indicator - hidden since role selection is deactivated */}
+            <span className="hidden sm:inline text-xs text-muted-foreground">{terms.stepLabel}</span>
+            <LangSwitcher variant="compact" />
+          </div>
         </div>
       </header>
 
@@ -167,14 +141,14 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
         {step === 2 && (
           <>
             <div className="mb-8">
-              <h1 className="text-3xl font-black text-foreground mb-2">Terms & Conditions</h1>
+              <h1 className="text-3xl font-black text-foreground mb-2">{terms.heading}</h1>
               <p className="text-muted-foreground">
-                Please read and accept our terms before accessing your reports and dashboard.
+                {terms.intro}
               </p>
             </div>
 
             <div className="space-y-2 mb-6">
-              {TERMS.map((section, i) => (
+              {terms.sections.map((section, i) => (
                 <AccordionItem
                   key={i}
                   title={section.title}
@@ -195,14 +169,14 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
                   className="mt-0.5 w-4 h-4 accent-primary shrink-0"
                 />
                 <span className="text-sm text-foreground leading-relaxed">
-                  I have read and I accept the WHRD Hub Terms & Conditions. I understand my reports are handled confidentially and I may request data deletion at any time.
+                  {terms.acceptLabel}
                 </span>
               </label>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-8">
               <Lock className="w-3.5 h-3.5 shrink-0" />
-              Your acceptance is recorded with a timestamp and stored securely on your account.
+              {terms.storedNote}
             </div>
 
             <div className="flex justify-end">
@@ -211,7 +185,7 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
                 disabled={!accepted || isPending}
                 className="gap-2"
               >
-                {isPending ? "Setting up your account…" : "Continue to Dashboard"}
+                {isPending ? terms.settingUp : terms.continue}
                 {!isPending && <ArrowRight className="w-4 h-4" />}
               </Button>
             </div>

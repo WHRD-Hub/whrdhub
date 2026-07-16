@@ -7,7 +7,7 @@ async function AdminDashboardData() {
 
   const { data: reports } = await supabase
     .from("reports")
-    .select("id, incident_types, status, urgency, verification_status, reporter_type, county, created_at, latitude, longitude, description, perpetrator_type");
+    .select("id, incident_types, status, urgency, verification_status, reporter_type, county, created_at, latitude, longitude, description, perpetrator_type, channel");
 
   return <AdminDashboardClient reports={(reports ?? []) as Report[]} />;
 }

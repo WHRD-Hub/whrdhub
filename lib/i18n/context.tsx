@@ -4,7 +4,9 @@ import {
   createContext, useContext, useState, useEffect,
   useCallback, type ReactNode,
 } from "react";
-import { translations, LANGUAGE_META, type Language, type TranslationSchema } from "./translations";
+import { useRouter } from "next/navigation";
+import { translations, LANGUAGE_META, SUPPORTED, type Language, type TranslationSchema } from "./translations";
+import { updateLanguagePreference } from "@/app/actions/preferences";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 interface LanguageContextValue {
@@ -21,8 +23,8 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 // ─── detection ────────────────────────────────────────────────────────────────
-const SUPPORTED: Language[] = ["en", "sw", "fr", "pt", "de", "ar"];
 const LS_KEY = "whrd-language";
+const COOKIE_KEY = "whrd-lang";
 
 function detectLanguage(): Language {
   if (typeof window === "undefined") return "en";
@@ -45,6 +47,7 @@ function detectLanguage(): Language {
 // ─── provider ────────────────────────────────────────────────────────────────
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
+  const router = useRouter();
 
   // Detect on mount (client-only)
   useEffect(() => {
@@ -61,14 +64,24 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem(LS_KEY, lang);
-  }, []);
+    document.cookie = `${COOKIE_KEY}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+    // Re-render server components (dashboard, report detail, etc.) so their
+    // server-rendered strings switch language immediately. The cookie above is
+    // read synchronously by getServerLanguage during this refresh.
+    router.refresh();
+    // Fire-and-forget: persists to the profile for logged-in users so SSR pages
+    // (and other devices) pick up the same preference. No-op if unauthenticated.
+    updateLanguagePreference(lang).catch(() => {});
+  }, [router]);
 
   const t = translations[language] as unknown as TranslationSchema;
   const isRTL = LANGUAGE_META[language].rtl;
 
-  // In English or Swahili, report form fields show dual-language labels (EN+SW)
-  const isDualLang = language === "en" || language === "sw";
-  const secondaryLang: Language | null = isDualLang ? (language === "en" ? "sw" : "en") : null;
+  // Dual-language (EN+SW) labels have been retired: once a language is chosen
+  // (via the report-page language modal or the switcher), the whole app renders
+  // in that single language.
+  const isDualLang = false;
+  const secondaryLang: Language | null = null;
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, isRTL, isDualLang, secondaryLang }}>

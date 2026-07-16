@@ -17,9 +17,12 @@ const VERIFICATION_BADGE: Record<string, "info" | "success" | "destructive" | "w
 const STATUS_BADGE: Record<string, "secondary" | "info" | "success" | "warning" | "destructive"> = {
   submitted: "secondary", under_review: "info", referred: "success", closed: "secondary", flagged: "destructive",
 };
+const CHANNEL_BADGE: Record<string, "secondary" | "info" | "success" | "warning"> = {
+  web: "secondary", ussd: "warning", api: "info", mobile: "success",
+};
 
-async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, currentUserId }: {
-  page: number; county?: string; urgency?: string; verif?: string; reporter?: string;
+async function ReportsTable({ page, county, urgency, verif, reporter, channel, selfOnly, currentUserId }: {
+  page: number; county?: string; urgency?: string; verif?: string; reporter?: string; channel?: string;
   selfOnly?: boolean; currentUserId?: string;
 }) {
   const supabase = await createClient();
@@ -27,7 +30,7 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
 
   let query = supabase
     .from("reports")
-    .select("id, incident_types, status, urgency, verification_status, reporter_type, county, created_at, perpetrator_type, consent_to_followup", { count: "exact" })
+    .select("id, incident_types, status, urgency, verification_status, reporter_type, county, created_at, perpetrator_type, consent_to_followup, channel", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
 
@@ -35,6 +38,7 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
   if (urgency) query = query.eq("urgency", urgency as "immediate" | "within_week" | "no_rush");
   if (verif) query = query.eq("verification_status", verif as "pending" | "verified" | "unverified" | "needs_more_info");
   if (reporter) query = query.eq("reporter_type", reporter as "anonymous" | "authenticated");
+  if (channel) query = query.eq("channel", channel as "web" | "ussd" | "api" | "mobile");
   if (selfOnly && currentUserId) query = query.eq("user_id", currentUserId);
 
   const { data: reports, count } = await query;
@@ -47,13 +51,14 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
     if (urgency) params.set("urgency", urgency);
     if (verif) params.set("verif", verif);
     if (reporter) params.set("reporter", reporter);
+    if (channel) params.set("channel", channel);
     if (selfOnly) params.set("self", "1");
     return `/admin/reports?${params}`;
   };
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-border overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
@@ -64,6 +69,7 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
               <TableHead>Urgency</TableHead>
               <TableHead>Fact-Check</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Channel</TableHead>
               <TableHead>Reporter</TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -71,7 +77,7 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
           <TableBody>
             {!reports?.length ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-12">No reports found</TableCell>
+                <TableCell colSpan={10} className="text-center text-muted-foreground py-12">No reports found</TableCell>
               </TableRow>
             ) : reports.map(r => (
               <TableRow key={r.id}>
@@ -101,6 +107,11 @@ async function ReportsTable({ page, county, urgency, verif, reporter, selfOnly, 
                 <TableCell>
                   <Badge variant={(r.status && STATUS_BADGE[r.status]) || "secondary"}>
                     {r.status?.replace(/_/g, " ")}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={CHANNEL_BADGE[r.channel ?? "web"] || "secondary"} className="uppercase">
+                    {r.channel ?? "web"}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -153,6 +164,7 @@ async function AdminReportsContent({ searchParams }: { searchParams: Promise<Rec
   const urgency = sp.urgency;
   const verif = sp.verif;
   const reporter = sp.reporter;
+  const channel = sp.channel;
   const selfOnly = sp.self === "1";
 
   const supabase = await createClient();
@@ -163,7 +175,7 @@ async function AdminReportsContent({ searchParams }: { searchParams: Promise<Rec
   const uniqueCounties = [...new Set((counties ?? []).map(r => r.county).filter(Boolean))].sort();
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-black text-foreground mb-1">All Reports</h1>
         <p className="text-muted-foreground text-sm">Review, filter, and fact-check incoming reports.</p>
@@ -206,6 +218,16 @@ async function AdminReportsContent({ searchParams }: { searchParams: Promise<Rec
           </select>
         </div>
         <div>
+          <label className="block text-xs font-semibold mb-1 text-muted-foreground">Channel</label>
+          <select name="channel" defaultValue={channel || ""} className="rounded-lg border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+            <option value="">All channels</option>
+            <option value="web">Web</option>
+            <option value="ussd">USSD</option>
+            <option value="mobile">Mobile</option>
+            <option value="api">API</option>
+          </select>
+        </div>
+        <div>
           <label className="block text-xs font-semibold mb-1 text-muted-foreground">View</label>
           <select name="self" defaultValue={selfOnly ? "1" : ""} className="rounded-lg border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
             <option value="">All reports</option>
@@ -228,7 +250,7 @@ async function AdminReportsContent({ searchParams }: { searchParams: Promise<Rec
 
       <Suspense fallback={<div className="bg-white rounded-xl border border-border p-12 text-center text-muted-foreground animate-pulse">Loading reports...</div>}>
         <ReportsTable
-          page={page} county={county} urgency={urgency} verif={verif} reporter={reporter}
+          page={page} county={county} urgency={urgency} verif={verif} reporter={reporter} channel={channel}
           selfOnly={selfOnly} currentUserId={currentUserId}
         />
       </Suspense>

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { FileText, Clock, CheckCircle, AlertTriangle, Shield, Plus, ExternalLink, MapPin, ArrowUpDown } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertTriangle, Shield, Plus, ExternalLink, ArrowUpDown, Smartphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,12 @@ export interface Report {
   longitude?: number | null;
   description?: string | null;
   perpetrator_type?: string | null;
+  channel?: string | null;
 }
+
+const CHANNEL_BADGE: Record<string, "secondary" | "info" | "success" | "warning"> = {
+  web: "secondary", ussd: "warning", api: "info", mobile: "success",
+};
 
 const PURPLE = "hsl(271, 76%, 31%)";
 const GOLD = "hsl(39, 78%, 46%)";
@@ -60,6 +65,7 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
   const [countyFilter, setCountyFilter] = useState("");
   const [urgencyFilter, setUrgencyFilter] = useState("");
   const [verifFilter, setVerifFilter] = useState("");
+  const [channelFilter, setChannelFilter] = useState("");
   const [sortField, setSortField] = useState<"created_at" | "urgency">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -68,6 +74,7 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
     if (countyFilter) f = f.filter(r => r.county === countyFilter);
     if (urgencyFilter) f = f.filter(r => r.urgency === urgencyFilter);
     if (verifFilter) f = f.filter(r => r.verification_status === verifFilter);
+    if (channelFilter) f = f.filter(r => (r.channel ?? "web") === channelFilter);
     f.sort((a, b) => {
       let cmp = 0;
       if (sortField === "created_at") cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -75,7 +82,7 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
       return sortDir === "asc" ? cmp : -cmp;
     });
     return f;
-  }, [reports, countyFilter, urgencyFilter, verifFilter, sortField, sortDir]);
+  }, [reports, countyFilter, urgencyFilter, verifFilter, channelFilter, sortField, sortDir]);
 
   const total = filtered.length;
   const pending = filtered.filter(r => r.verification_status === "pending").length;
@@ -83,6 +90,7 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
   const verified = filtered.filter(r => r.verification_status === "verified").length;
   const anonymous = filtered.filter(r => r.reporter_type === "anonymous").length;
   const authenticated = total - anonymous;
+  const ussdCount = filtered.filter(r => r.channel === "ussd").length;
 
   const incidentCounts: Record<string, number> = {};
   filtered.forEach(r => (r.incident_types || []).forEach(t => incidentCounts[t] = (incidentCounts[t] || 0) + 1));
@@ -120,23 +128,24 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-foreground mb-1">Admin Dashboard</h1>
           <p className="text-muted-foreground text-sm">Overview of all reports and platform activity.</p>
         </div>
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="self-start sm:self-auto">
           <Link href="/report"><Plus className="w-4 h-4 mr-1.5" />New report</Link>
         </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Total Reports" value={total} icon={FileText} color="text-primary bg-primary/10" />
         <StatCard label="Pending Review" value={pending} icon={Clock} color="text-yellow-600 bg-yellow-100" />
         <StatCard label="Immediate Urgency" value={immediate} icon={AlertTriangle} color="text-red-600 bg-red-100" />
         <StatCard label="Verified" value={verified} icon={CheckCircle} color="text-green-600 bg-green-100" />
+        <StatCard label="USSD Reports" value={ussdCount} icon={Smartphone} color="text-amber-600 bg-amber-100" />
         <StatCard label="Anonymous" value={anonymous} icon={Shield} color="text-purple-600 bg-purple-100" />
         <StatCard label="Authenticated" value={authenticated} icon={FileText} color="text-blue-600 bg-blue-100" />
       </div>
@@ -169,7 +178,17 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
             <option value="needs_more_info">Needs More Info</option>
           </select>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => { setCountyFilter(""); setUrgencyFilter(""); setVerifFilter(""); }}>
+        <div>
+          <label className="block text-xs font-semibold mb-1 text-muted-foreground">Channel</label>
+          <select value={channelFilter} onChange={e => setChannelFilter(e.target.value)} className="rounded-lg border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+            <option value="">All channels</option>
+            <option value="web">Web</option>
+            <option value="ussd">USSD</option>
+            <option value="mobile">Mobile</option>
+            <option value="api">API</option>
+          </select>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => { setCountyFilter(""); setUrgencyFilter(""); setVerifFilter(""); setChannelFilter(""); }}>
           Clear filters
         </Button>
       </div>
@@ -277,13 +296,14 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fact-Check</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Channel</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reporter</th>
                   <th className="text-right px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">No reports match current filters</td></tr>
+                  <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">No reports match current filters</td></tr>
                 ) : filtered.slice(0, 20).map(r => (
                   <tr key={r.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
@@ -306,6 +326,9 @@ export function AdminDashboardClient({ reports }: { reports: Report[] }) {
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={VERIF_BADGE[r.verification_status] || "secondary"}>{r.verification_status?.replace(/_/g, " ")}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={CHANNEL_BADGE[r.channel ?? "web"] || "secondary"} className="uppercase">{r.channel ?? "web"}</Badge>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={r.reporter_type === "anonymous" ? "outline" : "info"}>{r.reporter_type}</Badge>

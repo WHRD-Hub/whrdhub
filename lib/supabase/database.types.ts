@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          report_id: string | null
+          service_name: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          report_id?: string | null
+          service_name?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          report_id?: string | null
+          service_name?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           accepted_terms_at: string | null
@@ -25,6 +63,7 @@ export type Database = {
           is_anonymous: boolean | null
           onboarding_completed: boolean | null
           phone: string | null
+          preferred_language: string | null
           user_type: Database["public"]["Enums"]["user_type_enum"] | null
           username: string | null
         }
@@ -38,6 +77,7 @@ export type Database = {
           is_anonymous?: boolean | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          preferred_language?: string | null
           user_type?: Database["public"]["Enums"]["user_type_enum"] | null
           username?: string | null
         }
@@ -51,6 +91,7 @@ export type Database = {
           is_anonymous?: boolean | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          preferred_language?: string | null
           user_type?: Database["public"]["Enums"]["user_type_enum"] | null
           username?: string | null
         }

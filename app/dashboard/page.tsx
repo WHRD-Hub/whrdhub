@@ -5,24 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { FileText, Clock, CheckCircle, Plus, Briefcase, AlertTriangle, User, Shield } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import { LangSwitcher } from "@/components/lang-switcher";
+import { NotificationBell } from "@/components/notification-bell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CredentialsBanner } from "@/components/credentials-banner";
+import { translations } from "@/lib/i18n/translations";
+import { getServerLanguage } from "@/lib/i18n/server";
 
-const STATUS_META: Record<string, { label: string; variant: "secondary" | "info" | "success" | "warning" | "destructive" }> = {
-  submitted:    { label: "Submitted",          variant: "secondary" },
-  under_review: { label: "Under review",       variant: "info" },
-  referred:     { label: "Referred for support", variant: "success" },
-  closed:       { label: "Closed",             variant: "secondary" },
-  flagged:      { label: "Urgent",             variant: "destructive" },
-};
-
-const VERIF_META: Record<string, { label: string; variant: "secondary" | "info" | "success" | "warning" | "destructive" }> = {
-  pending:         { label: "Pending review",      variant: "info" },
-  verified:        { label: "Verified",            variant: "success" },
-  unverified:      { label: "Could not verify",   variant: "destructive" },
-  needs_more_info: { label: "More info needed",    variant: "warning" },
-};
+type BadgeVariant = "secondary" | "info" | "success" | "warning" | "destructive";
 
 async function DashboardContent() {
   const supabase = await createClient();
@@ -32,7 +22,7 @@ async function DashboardContent() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, display_name, is_anonymous, user_type, email, onboarding_completed")
+    .select("username, display_name, is_anonymous, user_type, email, onboarding_completed, preferred_language")
     .eq("id", user.id)
     .single();
 
@@ -47,18 +37,41 @@ async function DashboardContent() {
     redirect("/onboarding");
   }
 
+  const lang = await getServerLanguage(profile?.preferred_language);
+  const t = translations[lang].dashboard;
+
+  const STATUS_META: Record<string, { label: string; variant: BadgeVariant }> = {
+    submitted:    { label: t.statusSubmitted,  variant: "secondary" },
+    under_review: { label: t.statusUnderReview, variant: "info" },
+    referred:     { label: t.statusReferred,   variant: "success" },
+    closed:       { label: t.statusClosed,     variant: "secondary" },
+    flagged:      { label: t.statusFlagged,    variant: "destructive" },
+  };
+
+  const VERIF_META: Record<string, { label: string; variant: BadgeVariant }> = {
+    pending:         { label: t.verifPending,        variant: "info" },
+    verified:        { label: t.verifVerified,        variant: "success" },
+    unverified:      { label: t.verifUnverified,      variant: "destructive" },
+    needs_more_info: { label: t.verifNeedsMoreInfo,   variant: "warning" },
+  };
+
   const { data: reports } = await supabase
     .from("reports")
     .select("id, incident_types, status, urgency, verification_status, created_at, county, reporter_type")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  const reportIds = (reports ?? []).map(r => r.id);
-  const { data: assignedServices } = reportIds.length > 0
+  // Support-service details are only ever surfaced for reports that have been
+  // fact-checked and verified, regardless of when an admin assigned the service.
+  const verifiedReportIds = (reports ?? [])
+    .filter(r => r.verification_status === "verified")
+    .map(r => r.id);
+
+  const { data: assignedServices } = verifiedReportIds.length > 0
     ? await supabase
         .from("report_services")
         .select("report_id, note, services(name, category, organization, contact_phone, contact_email, contact_url)")
-        .in("report_id", reportIds)
+        .in("report_id", verifiedReportIds)
     : { data: [] };
 
   // If profile row doesn't exist yet (e.g. trigger delay after Google OAuth),
@@ -72,9 +85,9 @@ async function DashboardContent() {
   const loginEmail = isAnon ? `${username}@whrdhub.local` : (profile?.email ?? user.email ?? "");
 
   const stats = [
-    { label: "Reports submitted", value: reports?.length ?? 0,                                                              icon: FileText,      color: "text-primary bg-primary/10" },
-    { label: "Under review",      value: reports?.filter(r => r.status === "under_review").length ?? 0,                    icon: Clock,         color: "text-amber-600 bg-amber-100" },
-    { label: "Resolved",          value: reports?.filter(r => ["referred","closed"].includes(r.status ?? "")).length ?? 0,  icon: CheckCircle,   color: "text-green-600 bg-green-100" },
+    { label: t.reportsSubmitted, value: reports?.length ?? 0,                                                              icon: FileText,      color: "text-primary bg-primary/10" },
+    { label: t.underReview,      value: reports?.filter(r => r.status === "under_review").length ?? 0,                    icon: Clock,         color: "text-amber-600 bg-amber-100" },
+    { label: t.resolved,         value: reports?.filter(r => ["referred","closed"].includes(r.status ?? "")).length ?? 0,  icon: CheckCircle,   color: "text-green-600 bg-green-100" },
   ];
 
   return (
@@ -91,6 +104,7 @@ async function DashboardContent() {
                 <Shield className="w-3 h-3" /> Admin
               </span>
             )}
+            <NotificationBell />
             <LangSwitcher variant="compact" />
             <Link href="/profile"
               className="hidden xs:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 sm:px-3 py-1.5 rounded-lg hover:bg-muted">
@@ -107,11 +121,11 @@ async function DashboardContent() {
         {/* Greeting */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-foreground">Hello, {greeting}</h1>
-            <p className="text-muted-foreground text-sm mt-1">Track your reports and access support services here.</p>
+            <h1 className="text-2xl font-black text-foreground">{t.greeting}, {greeting}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{t.subtitle}</p>
           </div>
           <Button asChild size="sm">
-            <Link href="/report"><Plus className="w-4 h-4 mr-1.5" />New report</Link>
+            <Link href="/report"><Plus className="w-4 h-4 mr-1.5" />{t.makeReport}</Link>
           </Button>
         </div>
 
@@ -139,7 +153,7 @@ async function DashboardContent() {
         {assignedServices && assignedServices.length > 0 && (
           <div>
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-primary" />Support services for you
+              <Briefcase className="w-5 h-5 text-primary" />{t.servicesForYou}
             </h2>
             <div className="grid sm:grid-cols-2 gap-3">
               {assignedServices.map((a, i) => {
@@ -156,7 +170,7 @@ async function DashboardContent() {
                       </div>
                       <Badge variant="secondary" className="shrink-0 capitalize">{svc?.category?.replace(/_/g, " ")}</Badge>
                     </div>
-                    {a.note && <p className="text-xs text-muted-foreground italic">"{a.note}"</p>}
+                    {a.note && <p className="text-xs text-muted-foreground italic">&ldquo;{a.note}&rdquo;</p>}
                     <div className="flex flex-wrap gap-3 text-xs">
                       {svc?.contact_phone && <a href={`tel:${svc.contact_phone}`} className="text-primary hover:underline font-medium">{svc.contact_phone}</a>}
                       {svc?.contact_email && <a href={`mailto:${svc.contact_email}`} className="text-primary hover:underline font-medium">{svc.contact_email}</a>}
@@ -171,16 +185,16 @@ async function DashboardContent() {
 
         {/* Reports */}
         <div>
-          <h2 className="font-bold text-lg mb-4">Your reports</h2>
+          <h2 className="font-bold text-lg mb-4">{t.yourReports}</h2>
           {!reports?.length ? (
             <div className="bg-white rounded-2xl border border-border p-12 text-center shadow-sm">
               <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-7 h-7 text-muted-foreground" />
               </div>
-              <p className="font-semibold mb-1 text-foreground">No reports yet</p>
-              <p className="text-sm text-muted-foreground mb-5">Your submitted reports will appear here once you make one.</p>
+              <p className="font-semibold mb-1 text-foreground">{t.noReports}</p>
+              <p className="text-sm text-muted-foreground mb-5">{t.noReportsSub}</p>
               <Button asChild size="sm">
-                <Link href="/report">Make your first report</Link>
+                <Link href="/report">{t.makeReport}</Link>
               </Button>
             </div>
           ) : (
@@ -194,8 +208,8 @@ async function DashboardContent() {
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex flex-wrap gap-1.5">
-                          {(r.incident_types as string[]).slice(0, 3).map(t => (
-                            <span key={t} className="text-xs bg-muted px-2.5 py-0.5 rounded-full capitalize">{t.replace(/_/g, " ")}</span>
+                          {(r.incident_types as string[]).slice(0, 3).map(it => (
+                            <span key={it} className="text-xs bg-muted px-2.5 py-0.5 rounded-full capitalize">{it.replace(/_/g, " ")}</span>
                           ))}
                           {(r.incident_types as string[]).length > 3 && (
                             <span className="text-xs text-muted-foreground">+{(r.incident_types as string[]).length - 3} more</span>
@@ -218,11 +232,11 @@ async function DashboardContent() {
                     </div>
                     {services.length > 0 && (
                       <div className="px-3 py-2 rounded-xl bg-green-50 border border-green-200 text-xs text-green-800">
-                        <span className="font-semibold">Services assigned: </span>
+                        <span className="font-semibold">{t.servicesForYou}: </span>
                         {services.map(a => ((Array.isArray(a.services) ? a.services[0] : a.services) as { name: string } | null)?.name).filter(Boolean).join(", ")}
                       </div>
                     )}
-                    <p className="text-[10px] font-mono text-muted-foreground/60 border-t border-border pt-2">Case ID: {r.id}</p>
+                    <p className="text-[10px] font-mono text-muted-foreground/60 border-t border-border pt-2">{t.caseId}: {r.id}</p>
                   </Link>
                 );
               })}
@@ -232,7 +246,7 @@ async function DashboardContent() {
 
         {/* Emergency resources */}
         <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
-          <h2 className="font-bold text-sm mb-4 text-foreground">Emergency contacts</h2>
+          <h2 className="font-bold text-sm mb-4 text-foreground">{t.emergencyContacts}</h2>
           <div className="grid sm:grid-cols-2 gap-2">
             {[
               { label: "Kenya Police",      value: "999" },
@@ -252,14 +266,14 @@ async function DashboardContent() {
         {/* Footer with legal links */}
         <div className="border-t border-border pt-6 mt-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-            <p>© 2025 WHRD Hub. All rights reserved.</p>
+            <p>© 2025 WHRD Hub. {t.allRightsReserved}</p>
             <div className="flex items-center gap-4">
               <Link href="/privacy-policy" className="hover:text-primary transition-colors">
-                Privacy Policy
+                {t.privacyPolicy}
               </Link>
               <span className="opacity-30">•</span>
               <Link href="/terms-of-use" className="hover:text-primary transition-colors">
-                Terms of Use
+                {t.termsOfUse}
               </Link>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import ReportForm from "@/components/report-form";
 import { LangSwitcher } from "@/components/lang-switcher";
+import { LanguageOnboardingModal } from "@/components/language-onboarding-modal";
 
 export const metadata = {
   title: "Make a Report | WHRD Hub",
@@ -23,6 +24,8 @@ async function ReportFormWithAuth() {
 export default function ReportPage() {
   return (
     <main className="min-h-screen bg-muted/20">
+
+      <LanguageOnboardingModal />
 
       {/* Header */}
       <header className="bg-primary text-primary-foreground">
