@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Providers } from "./providers";
+import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker-registrar";
+import { OfflineSyncManager } from "@/components/pwa/offline-sync-manager";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -12,11 +14,25 @@ export const metadata: Metadata = {
   title: "WHRD Hub",
   description:
     "A secure space for Women Human Rights Defenders to report TFGBV and gender-based abuse, and connect with support services.",
+  applicationName: "WHRD Hub",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "WHRD Hub",
+  },
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",
-    apple: "/icon.png",
+    apple: "/apple-touch-icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#5B2D8E",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 const geistSans = Geist({
@@ -35,6 +51,8 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
+        <ServiceWorkerRegistrar />
+        <OfflineSyncManager />
       </body>
     </html>
   );

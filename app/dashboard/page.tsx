@@ -9,6 +9,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CredentialsBanner } from "@/components/credentials-banner";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { translations } from "@/lib/i18n/translations";
 import { getServerLanguage } from "@/lib/i18n/server";
 
@@ -133,6 +134,9 @@ async function DashboardContent() {
         {isAnon && (
           <CredentialsBanner username={username} loginEmail={loginEmail} />
         )}
+
+        {/* PWA install suggestion - self-hides if already installed/dismissed */}
+        <InstallPrompt />
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">

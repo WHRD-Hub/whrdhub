@@ -70,6 +70,31 @@ async function ReportDetail({ id }: { id: string }) {
 
   const assignedServiceIds = new Set((assignedServices ?? []).map(s => s.service_id));
 
+  // ─── Auto-match services to the support the reporter asked for ──────────────
+  // support_needed values line up with service categories (legal, medical,
+  // psychosocial, shelter, digital_security, financial, referral). We also map a
+  // couple of near-synonyms so admins get relevant suggestions without having to
+  // cycle through every service manually.
+  const SUPPORT_TO_CATEGORIES: Record<string, string[]> = {
+    legal: ["legal"],
+    medical: ["medical"],
+    psychosocial: ["psychosocial"],
+    counselling: ["psychosocial"],
+    shelter: ["shelter"],
+    digital_security: ["digital_security"],
+    financial: ["financial"],
+    referral: ["referral"],
+    other: ["referral", "other"],
+  };
+
+  const supportNeeded = (report.support_needed as string[]) ?? [];
+  const matchedCategories = new Set(
+    supportNeeded.flatMap(s => SUPPORT_TO_CATEGORIES[s] ?? [s])
+  );
+
+  const unassignedServices = (allServices ?? []).filter(s => !assignedServiceIds.has(s.id));
+  const suggestedServices = unassignedServices.filter(s => matchedCategories.has(s.category));
+
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-6">
       {/* Back */}
@@ -249,7 +274,12 @@ async function ReportDetail({ id }: { id: string }) {
                 })}
               </div>
             )}
-            <AssignServiceForm reportId={id} services={(allServices ?? []).filter(s => !assignedServiceIds.has(s.id))} />
+            <AssignServiceForm
+              reportId={id}
+              services={unassignedServices}
+              suggested={suggestedServices}
+              supportRequested={supportNeeded}
+            />
           </div>
 
           {/* Audit log */}

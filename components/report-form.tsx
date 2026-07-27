@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { submitReport, type ReportData } from "@/app/actions/submit-report";
 import { createClient as createBrowserSupabase } from "@/lib/supabase/client";
 import { uploadReportScreenshots } from "@/lib/supabase/storage";
+import { enqueueReport, requestBackgroundSync } from "@/lib/offline/report-queue";
+import { QUEUE_CHANGED_EVENT } from "@/components/pwa/offline-sync-manager";
 import { CopyButton } from "@/components/copy-button";
 import { toast } from "sonner";
 import { useLanguage, useT } from "@/lib/i18n/context";
@@ -225,6 +227,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string|null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [offlineSaved, setOfflineSaved] = useState(false);
 
   const isOnline = violenceType === "online" || violenceType === "both";
 
@@ -254,9 +257,33 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
     setLoading(true);
     setError(null);
 
+    // Detect connectivity up front. When offline we skip the (network-bound)
+    // screenshot upload and queue the report locally instead of hitting the server.
+    const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+
+    // Declared outside the try so the catch block can queue it if the network
+    // drops mid-request.
+    let payload: ReportData | null = null;
+
+    // Persist a report to the on-device offline queue and show confirmation.
+    const saveOffline = async (p: ReportData): Promise<boolean> => {
+      try {
+        await enqueueReport(p);
+        await requestBackgroundSync();
+        if (typeof window !== "undefined") window.dispatchEvent(new Event(QUEUE_CHANGED_EVENT));
+        setOfflineSaved(true);
+        return true;
+      } catch {
+        setError(
+          "You appear to be offline and this device could not save your report locally. Please reconnect and try again."
+        );
+        return false;
+      }
+    };
+
     try {
       let uploadedUrls = [...screenshotUrls];
-      if (screenshotFiles.length > 0 && isAuthenticated) {
+      if (!isOffline && screenshotFiles.length > 0 && isAuthenticated) {
         setUploading(true);
         const { urls, errors } = await uploadReportScreenshots("", screenshotFiles);
         if (errors.length) toast.error(`${tr.uploadFailed}: ${errors[0]}`);
@@ -271,7 +298,7 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       const allSupport = [...supportNeeded.filter(s => s !== "other")];
       if (supportNeeded.includes("other") && supportOther.trim()) allSupport.push("other");
 
-      const payload: ReportData = {
+      payload = {
         incident_types: incidentTypes,
         description,
         reporting_for: reportingFor === "child" || reportingFor === "community"
@@ -300,6 +327,14 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
         reporter_type: isAuthenticated ? "authenticated" : "anonymous",
       };
 
+      // Offline: queue locally and confirm. It will sync automatically once the
+      // device is back online (and, for authenticated reports, signed in).
+      if (isOffline) {
+        await saveOffline(payload);
+        setLoading(false);
+        return;
+      }
+
       const result = await submitReport(payload);
       if (result.success) {
         if (isAuthenticated) {
@@ -319,8 +354,16 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
       }
     } catch (err) {
       console.error("Report submission error:", err);
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg || "An unexpected error occurred. Please try again.");
+      // A thrown error usually means the request never reached the server
+      // (e.g. the connection dropped). If we're offline, queue it rather than
+      // losing the report.
+      const nowOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+      if (payload && nowOffline) {
+        await saveOffline(payload);
+      } else {
+        const msg = err instanceof Error ? err.message : String(err);
+        setError(msg || "An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -329,6 +372,34 @@ export default function ReportForm({ isAuthenticated = false, userEmail }: Repor
   // Perpetrator options from translations
   const PERPETRATOR_TYPES = Object.entries(tr.options.perpetrators).map(([value, label]) => ({ value, label }));
   const SUPPORT_OPTIONS   = Object.entries(tr.options.support).map(([value, label]) => ({ value, label }));
+
+  // Offline confirmation — shown after a report is queued on-device.
+  if (offlineSaved) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-white rounded-2xl border border-border shadow-sm p-6 sm:p-8 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+            <Check className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-black text-primary">Saved on your device</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            You&apos;re currently offline, so your report has been stored securely on this
+            device. It will be submitted automatically as soon as you reconnect
+            {isAuthenticated ? "" : " and your secure account is created"}. You can
+            safely close this page &mdash; just reopen the app while online.
+          </p>
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-left text-xs text-amber-900">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Keep this app installed and reopen it once you have a connection.
+              Don&apos;t clear your browser data before it syncs, or the saved report
+              could be lost.
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-5 w-full max-w-2xl mx-auto">
