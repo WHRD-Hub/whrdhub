@@ -119,7 +119,7 @@ export function OnboardingClient({ isAnon }: { isAnon: boolean }) {
       <header className="bg-white border-b border-border sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-[54px] w-auto object-contain" />
           </div>
 
           <div className="flex items-center gap-3">

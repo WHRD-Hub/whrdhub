@@ -25,7 +25,7 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       <nav aria-label="Main navigation" className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex justify-between items-center gap-2">
           <Link href="/" className="flex items-center gap-3" aria-label="WHRD Hub home">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-11 w-auto object-contain" />
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-[66px] w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-2">
             <LangSwitcher variant="compact" />
@@ -57,42 +57,54 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       {/* ── Hero ── */}
       <main id="main-content" tabIndex={-1}>
-      <section className="pt-20 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 bg-primary text-white" aria-labelledby="hero-heading">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-5 sm:mb-8">
-            <Lock className="w-3 h-3" />
-            {l.hero.badge}
+      <section className="pt-20 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 bg-primary text-white" aria-labelledby="hero-heading">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div className="text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-5 sm:mb-8">
+              <Lock className="w-3 h-3" />
+              {l.hero.badge}
+            </div>
+            <h1 id="hero-heading" className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black leading-[1.12] mb-3 sm:mb-5">
+              {l.hero.title}
+              <br />
+              <span className="text-white/75 font-light">{l.hero.titleLight}</span>
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg text-white/70 max-w-xl mx-auto lg:mx-0 mb-6 sm:mb-10 leading-relaxed px-2 lg:px-0">
+              {l.hero.subtitle}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center lg:justify-start px-2 lg:px-0">
+              <Link
+                href="/report"
+                className="group inline-flex items-center justify-center gap-2 bg-white text-primary px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-lg font-bold text-sm hover:bg-white/95 transition-colors w-full sm:w-auto"
+              >
+                {l.hero.ctaMakeReport}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="inline-flex items-center justify-center border border-white/25 text-white px-7 py-3.5 rounded-lg font-medium text-sm hover:bg-white/8 transition-colors"
+              >
+                {l.hero.ctaHowItWorks}
+              </Link>
+            </div>
+            <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-[11px] text-white/55">
+              {l.hero.trust.map((item) => (
+                <span key={item} className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3 h-3 text-white/50" />
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
-          <h1 id="hero-heading" className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black leading-[1.12] mb-3 sm:mb-5">
-            {l.hero.title}
-            <br />
-            <span className="text-white/75 font-light">{l.hero.titleLight}</span>
-          </h1>
-          <p className="text-sm sm:text-base md:text-lg text-white/70 max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed px-2">
-            {l.hero.subtitle}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center px-2">
-            <Link
-              href="/report"
-              className="group inline-flex items-center justify-center gap-2 bg-white text-primary px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-lg font-bold text-sm hover:bg-white/95 transition-colors w-full sm:w-auto"
-            >
-              {l.hero.ctaMakeReport}
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="inline-flex items-center justify-center border border-white/25 text-white px-7 py-3.5 rounded-lg font-medium text-sm hover:bg-white/8 transition-colors"
-            >
-              {l.hero.ctaHowItWorks}
-            </Link>
-          </div>
-          <div className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] text-white/55">
-            {l.hero.trust.map((item) => (
-              <span key={item} className="flex items-center gap-1.5">
-                <CheckCircle className="w-3 h-3 text-white/50" />
-                {item}
-              </span>
-            ))}
+
+          {/* Woman using a feature phone — reporting is reachable on any handset */}
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/woman-feature-phone.png"
+              alt="A woman using a basic feature phone to reach support"
+              className="w-full rounded-2xl object-cover shadow-2xl ring-1 ring-white/10 max-h-[300px] sm:max-h-[440px]"
+            />
           </div>
         </div>
       </section>
@@ -166,9 +178,9 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       {/* ── Stats ── */}
       <section aria-label="Platform statistics" className="py-12 sm:py-24 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border rounded-lg sm:rounded-2xl overflow-hidden border border-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border rounded-lg sm:rounded-2xl overflow-hidden border border-border">
             {l.stats.map((item, i) => {
-              const accent = ["hsl(270, 52%, 37%)", "hsl(27, 87%, 52%)", "hsl(192, 100%, 38%)"][i];
+              const accent = ["hsl(270, 52%, 37%)", "hsl(192, 100%, 38%)"][i];
               return (
                 <div key={i} className="bg-white px-4 sm:px-8 py-6 sm:py-10 text-center">
                   <p className="text-2xl sm:text-3xl font-black mb-1" style={{ color: accent }}>{item.value}</p>
@@ -215,7 +227,7 @@ export function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-              <img src="/main-logo.png" alt="WHRD Hub" className="h-9 w-auto object-contain" />
+              <img src="/main-logo.png" alt="WHRD Hub" className="h-[54px] w-auto object-contain" />
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <LangSwitcher variant="full" />

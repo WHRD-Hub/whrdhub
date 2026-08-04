@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { FileText, Clock, CheckCircle, Plus, Briefcase, AlertTriangle, User, Shield } from "lucide-react";
+import { FileText, Clock, CheckCircle, Plus, Briefcase, AlertTriangle, User, Shield, LayoutGrid } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import { LangSwitcher } from "@/components/lang-switcher";
 import { NotificationBell } from "@/components/notification-bell";
@@ -97,7 +97,7 @@ async function DashboardContent() {
       <header className="bg-white border-b border-border sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-3">
-            <img src="/main-logo.png" alt="WHRD Hub" className="h-8 sm:h-9 w-auto object-contain" />
+            <img src="/main-logo.png" alt="WHRD Hub" className="h-12 sm:h-[54px] w-auto object-contain" />
           </div>
           <div className="flex items-center gap-1 sm:gap-3">
             {profile?.user_type === "admin" && (
@@ -105,6 +105,13 @@ async function DashboardContent() {
                 <Shield className="w-3 h-3" /> Admin
               </span>
             )}
+            <a
+              href={`${process.env.NEXT_PUBLIC_SAAS_URL ?? "http://localhost:3000"}/dashboard`}
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2.5 py-1.5 rounded-lg hover:bg-primary/15 transition-colors"
+              title="Switch to the WHRD Hub community platform"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" /> <span className="hidden md:inline">Switch to Hub</span>
+            </a>
             <NotificationBell />
             <LangSwitcher variant="compact" />
             <Link href="/profile"

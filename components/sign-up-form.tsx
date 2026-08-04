@@ -107,7 +107,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
   return (
     <div className={cn("flex flex-col gap-4 sm:gap-6", className)} {...props}>
       <div className="flex flex-col items-center mb-2 gap-1 sm:gap-2">
-        <img src="/main-logo.png" alt="WHRD Hub" className="h-14 sm:h-16 w-auto object-contain" />
+        <img src="/main-logo.png" alt="WHRD Hub" className="h-[84px] sm:h-24 w-auto object-contain" />
         <p className="text-xs text-muted-foreground">Protect · Heal · Nurture</p>
       </div>
 

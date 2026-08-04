@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Briefcase, BarChart2, Map, RadioTower, Shield, LogOut, Menu } from "lucide-react";
+import { LayoutDashboard, FileText, Briefcase, BarChart2, Map, RadioTower, GitBranch, Shield, LogOut, Menu } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { LangSwitcher } from "@/components/lang-switcher";
@@ -16,6 +16,7 @@ const navLinks = [
   { href: "/admin/services",  label: "Services",   icon: Briefcase },
   { href: "/admin/analytics", label: "Analytics",  icon: BarChart2 },
   { href: "/admin/listening", label: "Online Listening", icon: RadioTower },
+  { href: "/admin/linkages",  label: "Linkages",   icon: GitBranch },
   { href: "/map",             label: "Map View",   icon: Map },
 ];
 
@@ -34,7 +35,7 @@ export function AdminNav({ username, userType }: { username: string; userType: s
   const NavContent = () => (
     <>
       <div className="p-5 border-b border-white/10">
-        <img src="/main-logo.png" alt="WHRD Hub" className="h-10 w-auto object-contain mb-3" />
+        <img src="/main-logo.png" alt="WHRD Hub" className="h-[60px] w-auto object-contain mb-3" />
         <div className="flex items-center gap-1.5">
           <Shield className="w-3 h-3 opacity-60" />
           <p className="text-xs opacity-60 capitalize">{userType} Console</p>

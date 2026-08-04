@@ -83,7 +83,6 @@ export const translations = {
       },
       stats: [
         { value: "100%", label: "Anonymous reporting", desc: "No email or real name required" },
-        { value: "24 h",  label: "Response time",       desc: "Defenders review every report" },
         { value: "Encrypted", label: "All data",        desc: "Kenya Data Protection Act 2019" },
       ],
       cta: {
@@ -420,7 +419,6 @@ export const translations = {
       },
       stats: [
         { value: "100%", label: "Kuripoti bila kujulikana", desc: "Barua pepe au jina halisi haihitajiki" },
-        { value: "Masaa 24", label: "Muda wa majibu", desc: "Walinzi wanakagua kila ripoti" },
         { value: "Imesimbwa", label: "Data yote", desc: "Sheria ya Ulinzi wa Data Kenya 2019" },
       ],
       cta: {
@@ -757,7 +755,6 @@ export const translations = {
       },
       stats: [
         { value: "100%", label: "Signalement anonyme", desc: "Aucun email ni nom réel requis" },
-        { value: "24 h",  label: "Temps de réponse",    desc: "Les défenseurs examinent chaque signalement" },
         { value: "Chiffré", label: "Toutes les données", desc: "Loi kényane sur la protection des données 2019" },
       ],
       cta: {
@@ -1094,7 +1091,6 @@ export const translations = {
       },
       stats: [
         { value: "100%", label: "Denúncia anônima", desc: "Nenhum e-mail ou nome real necessário" },
-        { value: "24 h",  label: "Tempo de resposta", desc: "Defensoras revisam cada denúncia" },
         { value: "Criptografado", label: "Todos os dados", desc: "Lei de Proteção de Dados do Quênia 2019" },
       ],
       cta: {
@@ -1431,7 +1427,6 @@ export const translations = {
       },
       stats: [
         { value: "100%", label: "Anonyme Meldung", desc: "Keine E-Mail oder Klarnamen erforderlich" },
-        { value: "24 Std.", label: "Reaktionszeit",  desc: "Verteidiger prüfen jede Meldung" },
         { value: "Verschlüsselt", label: "Alle Daten", desc: "Kenia Datenschutzgesetz 2019" },
       ],
       cta: {
@@ -1768,7 +1763,6 @@ export const translations = {
       },
       stats: [
         { value: "100%", label: "إبلاغ مجهول", desc: "لا يلزم بريد إلكتروني أو اسم حقيقي" },
-        { value: "٢٤ ساعة", label: "وقت الاستجابة", desc: "يراجع المدافعون كل بلاغ" },
         { value: "مشفر", label: "جميع البيانات", desc: "قانون حماية البيانات في كينيا 2019" },
       ],
       cta: {
