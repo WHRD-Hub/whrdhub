@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Briefcase, BarChart2, Map, Shield, LogOut, Menu } from "lucide-react";
+import { LayoutDashboard, FileText, Briefcase, BarChart2, Map, RadioTower, Shield, LogOut, Menu } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { LangSwitcher } from "@/components/lang-switcher";
@@ -15,6 +15,7 @@ const navLinks = [
   { href: "/admin/reports",   label: "Reports",    icon: FileText },
   { href: "/admin/services",  label: "Services",   icon: Briefcase },
   { href: "/admin/analytics", label: "Analytics",  icon: BarChart2 },
+  { href: "/admin/listening", label: "Online Listening", icon: RadioTower },
   { href: "/map",             label: "Map View",   icon: Map },
 ];
 
